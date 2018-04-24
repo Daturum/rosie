@@ -58,25 +58,25 @@ The interface code reaches maximum maintainability as it is isolated from backed
 
 # Version control
 Work-in-progress is stored in a database and is available for edition, run and review by special system roles.
-When the work is done, the interface programmer asks the repository owner to download modifications and add them to the version control system, singed by this interface programmer. The rest of the workflow is the same as with backedn developers.
+When the work is done, the interface programmer asks the repository owner to download modifications and add them to the version control system, singed by this interface programmer. The rest of the workflow is the same as with backend development.
 
 # File structure
 Rosie adds a folder "app/interfaces" to the hosting application. The folder has this structure
 - interfaces
 - - role_1
-- - - layout.<format>.<handler>
-- - - layout/script.<format>.<handler>
-- - - layout/style.<format>.<handler>
-- - - scenario_1.<format>.<handler>
-- - - scenario_1/script.<format>.<handler>
-- - - scenario_1/style.<format>.<handler>
-- - - scenario_1/partial_1.<format>.<handler>
-- - - scenario_1/partial_N.<format>.<handler>
-…
-- - - scenario_N.<format>.<handler>
-…
+- - - layout.[format].[handler]
+- - - layout/script.[format].[handler]
+- - - layout/style.[format].[handler]
+- - - scenario_1.[format].[handler]
+- - - scenario_1/script.[format].[handler]
+- - - scenario_1/style.[format].[handler]
+- - - scenario_1/partial_1.[format].[handler]
+- - - scenario_1/partial_N.[format].[handler]
+- - - ...
+- - - scenario_N.[format].[handler]
+- - - ...
 - - role_2
-...
+- - ...
 - - public_files/
 
 All these files are used and interpreted at the engine level.
