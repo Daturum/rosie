@@ -1,0 +1,8 @@
+<div id="loading_error" style="margin-left: 10px; color: darkred;">
+  <%= @component.loading_error[:description] %>
+  <br/>
+  <a href="#" onclick="$(this).hide().next().fadeIn();return false;">Show backtrace</a>
+  <span id="backtrace" style="display: none; color: black;">
+    <%= simple_format html_escape(@component.loading_error[:backtrace].join("\n")) %>
+  </span>
+</div>

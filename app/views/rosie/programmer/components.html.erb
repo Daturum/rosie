@@ -1,0 +1,356 @@
+<% # CSS %>
+<style>
+  table.components_table { width: 100%; }
+  table.components_table td { vertical-align: top; }
+  table.components_table td.menu { width: 200px; }
+  a.secondary, span.secondary { text-decoration: none; color: #ddd; cursor: pointer; }
+  a.secondary::before, span.secondary::before { content: '\2003'; }
+  a.secondary:hover, span.secondary:hover { color: gray; }
+  div.side_menu__component-actions { float: right; }
+</style>
+
+<% # HTML %>
+<table class="components_table">
+  <tr>
+    <td class="side menu">
+      <% Component.where(component_scope: @component_scope).order(:path).each do |c| %>
+        <div component_path="<%= c.path %>">
+          <% # this is link to the component %>
+          <%= link_to c.path.gsub(/[^\/]+\//, '&mdash;&nbsp;').html_safe,
+            {path: c.path}, class: 'edit_link'
+
+          # this is span to show whether the component is locked by other programmer
+          %><% if c.get_locking_programmer
+            %><span style="color:gray" title="Locked by <%= c.get_locking_programmer %>"><%=
+               raw("*&nbsp;#{Programmer.short_name(c.get_locking_programmer)[0..2]}")
+            %></span>
+          <% end %>
+
+          <div class="side_menu__component-actions">
+            <% # this is span to toggle visibility component's subcomponents %>
+            <% if c.component_type == 'role_landing' %>
+              <span class="toggle_components secondary" onclick="window.toggle_dependent_components(this);"
+                    title="collapse/expand"></span>
+            <% end %>
+
+
+            <% # this is span to open landing page or scenario in a new tab %>
+            <% if c.component_type.in? %w'role_landing scenario' %>
+              <%= link_to '&#9657;'.html_safe, "/#{c.path}", target: :blank, class: "secondary",
+                    title: 'Open this langing page/scenario in new page' %>
+            <% end %>
+
+            <% # this is Delete link %>
+            <a href="#" class="del secondary" onclick="window.deleteLinkClicked(this); return false;"
+               title="Delete component">×</a>
+          </div>
+
+        </div>
+      <% end %>
+      <br/>
+      <%= select_tag "add_new_component", 
+        options_for_select(Component.permitted_component_types(@component_scope).map{|ct| 
+          ["new #{ct.humanize}", ct, {prompt: ComponentTypes.templates[ct][:prompt]}]}, 
+          (@component.component_type if @component.new_record?)), 
+        include_blank: 'Add new component',
+        onchange: "new_component_select_changed.call(this);" %>
+
+      <% if (@version_count = @component.versions.count) > 0 %>
+        <hr/>
+        <div id="versions">
+          <% @component.versions.reorder('ID DESC').limit(100).each.with_index do |v, index| %>
+            <div class="version" data-index="<%= @version_count - index + 1%>">
+              <span><%= v.whodunnit ? Programmer.short_name(v.whodunnit) : raw('<i>Undefined</i>') %></span>
+              <%= link_to({path: params[:path], diff_with: (v.id if index > 0)},
+                {class: 'version_ts', style: 'float:right', title: v.created_at.to_s(:short) }) do %>
+                <%= short_time_ago_in_words v.created_at %>
+              <% end %>
+            </div>
+          <% end %>
+          <div class="version" data-index="1">
+            <span><i>initial</i></span>
+            <%= link_to({path: params[:path], diff_with: 0},
+              {class: 'version_ts', style: 'float:right', title: @component.created_at.to_s(:short) }) do %>
+              <%= short_time_ago_in_words @component.created_at %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </td>
+    
+    
+    
+    <td id="component_form" data-original-path="<%= @component.path if @component.persisted? %>"
+      data-latest-version-timestamp="<%= @component.latest_version_timestamp %>"
+      data-new-component-type="<%= @component.component_type if @component.new_record? %>">
+      <%= @component.component_type %>
+      <% if @component.occurence == 'multiple' %>
+        <input type="string" id="name" value="<%= @component.name %>"></input>
+      <% end %>
+      @
+      <%= select_tag "context", options_for_select(@component.permitted_contexts, @component.context),
+        onchange: "context_select_changed.call(this);"%>&emsp;
+
+      format <%= select_tag "format", options_for_select(@component.permitted_formats, @component.format) %>&emsp;
+      handler <%= select_tag "handler", options_for_select(@component.permitted_handlers, @component.handler) %>&emsp;
+      
+      
+      <span style="color: red;" id="locked_by">
+        <% if @component.get_locking_programmer %>
+          <%= "Locked by #{@component.get_locking_programmer} #{time_ago_in_words @component.updated_at} ago" %>
+        <% end %>
+      </span>
+      <% unless @component.get_locking_programmer %>
+        <span style="color:gray;">Cmd|Ctrl+S to save changes</span>
+      <% end %>
+      <br/>
+      <textarea id="body" style="display:none;"><%= @component.body %></textarea>
+      <% if params[:diff_with] %>
+        <%= hidden_field_tag 'diff_version_body', @component.paper_trail.version_at(
+          params[:diff_with].to_i > 0 ?
+            @component.versions.find(params[:diff_with]).created_at + 0.5.seconds :
+            @component.created_at + 0.5.seconds).body %>
+      <% end %>
+      <%= render 'loading_error' if @component.loading_error.present? %>
+      <%= render 'hints' %>
+    </td>
+  </tr>
+</table>
+
+<% # JS %>
+<script>
+window.name = "component_edit";
+document.title = '<%= @component.path %> - ' + document.title;
+
+var format = $('#format').val(),
+  handler = $('#handler').val(),
+  codemirror_mode = (format == 'html' && handler == 'erb') ? "application/x-erb" :
+    (format == 'html' && handler == 'slim')   ? "application/x-slim" :
+    (format == 'css'  && handler == 'raw')    ? "text/css" : 
+    (format == 'css'  && handler == 'scss')   ? "text/x-scss" : 
+    (format == 'css'  && handler == 'sass')   ? "text/x-sass" : 
+    (format == 'js'   && handler == 'raw')    ? "text/javascript" : 
+    (format == 'js'   && handler == 'coffee') ? "text/x-coffeescript" :
+    (format == 'text' && handler == 'ruby')   ? "text/x-ruby" : "text/plain";
+
+// Adding CodeMirror
+window.editor = CodeMirror.fromTextArea(document.getElementById("body"), {
+  lineNumbers: true,
+  mode: codemirror_mode,
+  indentWithTabs: false,
+  viewportMargin: Infinity,
+  lineWrapping: true,
+  matchBrackets: true
+});
+editor.getWrapperElement().style.height = 'auto';
+
+editor.focus();
+
+// New component select change
+window.new_component_select_changed = function(){ 
+  if($(this).val()) {
+    var prompt_text = $('option:selected', this).attr('prompt'), name = '';
+    if(prompt_text && (prompt_text != '')) name = prompt(prompt_text);
+    if(name != null) window.location = "?path=NEW&type="+$(this).val() + (name ? ('&name='+name) : ''); 
+    else $(this).val('');
+  }
+};
+
+// New component context change (for updating template component body)
+window.context_select_changed = function(){
+  if($('#component_form').data('original-path') == ""){ // if this is a new component
+    var qs = QueryString();
+    qs['context'] = $(this).val();
+    window.location = '?' +  qs.build();
+  }
+}
+
+// AJAX Save and Create
+$(document).keydown(function (e) {
+  if ((e.metaKey || e.ctrlKey) && e.keyCode == 83) {
+    e.preventDefault();
+    saveComponent();
+  }
+});
+
+function checkLockIsFree()  {
+  if($('#locked_by').text().trim() != "") { return false; } else { return true; }
+}
+
+function saveComponent() {
+  if(!checkLockIsFree()) { alert($('#locked_by').text().trim()); return; }
+
+  editor.getWrapperElement().style.background = '#eee';
+  $.ajax({url: "?", type: "POST",
+    data: {
+      body: $('#body').val(),
+      component_type: $('#component_type').val(),
+      context: $('#context').val(),
+      name: $('#name').val(),
+      format: $('#format').val(),
+      handler: $('#handler').val(),
+      original_path: $('#component_form').data('original-path'),
+      new_component_type: $('#component_form').data('new-component-type'),
+      latest_version_timestamp: $('#component_form').data('latest-version-timestamp')}}).
+    success(function(result){
+      eval(result);
+      editor.getWrapperElement().style.background = '';
+      $(editor.getWrapperElement()).removeAttr('changed');
+    }).
+    fail(function(jqXHR, textStatus, errorThrown) {
+      alert(jqXHR.responseText);
+      editor.getWrapperElement().style.background = '#faa';
+    });
+}
+
+// side menu highlight
+$('.side.menu div[component_path="'+QueryString()['path']+'"] a.edit_link').addClass('selected');
+
+if(QueryString()['diff_with'])
+  $('.side.menu #versions a').filter(function(){
+    return QueryString(this.search)['diff_with'] == QueryString()['diff_with']; }).each(
+      function(){ $(this).addClass('selected').prev().addClass('selected'); });
+
+// AJAX Delete
+window.deleteLinkClicked = function(link)
+{
+  if(!checkLockIsFree()) return;
+
+  var pathToDelete = $(link).closest('div[component_path]').attr('component_path');
+  if(confirm('Delete "' + pathToDelete + '" – Are you sure?'))
+  {
+    $.ajax({url: "?", type: "POST", data: {delete: pathToDelete}}).
+      success(function(result){ eval(result); });
+    $(this).remove();
+  }
+}
+
+// Track line numbers and set cursor
+editor.on('cursorActivity', function(cm) {
+  window.location.hash = ((parseInt(cm.getCursor()['line']) || 0) + 1) + 
+    ":" + ((parseInt(cm.getCursor()['ch']) || 0) + 1);
+}) ;
+if(window.location.hash.indexOf(':') > -1)
+{
+  var pos = window.location.hash.substr(1).split(':');
+  editor.setCursor(0, 0);
+  setTimeout(function(){ editor.setCursor(pos[0]-1, pos[1]-1); }, 200);
+  editor.replaceSelection(' '); editor.undo(); // workaround to "floating" cursor position bug
+}
+
+// Setting timeout for for 10 minutes OR Locking editor; Unlocking on beforeunload
+window.setOrResetLockTimeout = function(){
+  if(window.__lockTimeout) clearTimeout(window.__lockTimeout);
+  window.__lockTimeout = setTimeout(function(){
+    $('#locked_by').text('Locked by Timeout (10 minutes)');
+    editor.getWrapperElement().style.background = '#eee';
+  }, 10 * 60 * 1000);
+}
+if(checkLockIsFree())
+{
+  setOrResetLockTimeout();
+} else {
+  editor.getWrapperElement().style.background = '#eee';
+}
+
+// Protect from accidentally closing tab with work in progress
+
+$(window).on('beforeunload', function(){
+  if($(editor.getWrapperElement()).is('[changed]'))
+    return 'You have unsaved changes. Delete them?';
+  if($('#locked_by').text().trim() == "")
+    $.ajax({url: "?", type: "PUT", data: {unlock: $('#component_form').data('original-path')}});
+});
+
+editor.on('change', function(cm) {
+  editor.save();
+  $(cm.getWrapperElement()).attr('changed', 'changed');
+}) ;
+
+// Toggle visibility of subcomponents
+window.toggle_dependent_components = function(element){
+  var component_path = $(element).closest('div[component_path]').attr('component_path')
+  var states = JSON.parse(localStorage.getItem("closed_dependent_components")) || [];
+  var need_to_collapse = (states.indexOf(component_path) == -1) // component path is not in closed components array, so collapsing
+  if(need_to_collapse) states.push(component_path); else states.splice(states.indexOf(component_path), 1);
+  localStorage.setItem("closed_dependent_components", JSON.stringify(states));
+  window.update_component_state(component_path);
+}
+
+window.update_component_state = function(component_path){
+  var states = JSON.parse(localStorage.getItem("closed_dependent_components")) || [];
+  var state_closed = states.indexOf(component_path) > -1;
+  if(state_closed)
+  {
+    $(".side.menu div[component_path^='"+component_path+"/'").hide();
+    $(".side.menu div[component_path='"+component_path+"'] .toggle_components").html('&gt;&gt;')
+  } else {
+    $(".side.menu div[component_path^='"+component_path+"/'").fadeIn();
+    $(".side.menu div[component_path='"+component_path+"'] .toggle_components").html('&lt;&lt;')
+  }
+}
+   // Now initializing on page load
+$('span.toggle_components').each(function(){
+  var component_path = $(this).closest('div[component_path]').attr('component_path');
+  window.update_component_state(component_path);
+});
+
+// ShowDiff if diff_with provided
+if($('#diff_version_body').size() > 0)
+{
+  var origin = $('#diff_version_body').val(),
+      current_value = $('#body').val(),
+      $current_version = $('#versions>.version:first'),
+      $compared_version = $('#versions>.version a.selected').parent();
+
+  $('#component_form').html(
+    '<span>Version ' + $current_version.data('index') + " (current) – " +
+    $current_version.find('span').text() + ', ' +
+    $current_version.find('a').attr('title')+"</span>" +
+    ($compared_version.size() > 0 ? ('<span style="float:right;">Version ' + $compared_version.data('index') + " – " +
+    $compared_version.find('span').text() + ', ' +
+    $compared_version.find('a').attr('title')+"</span>") : ""));
+
+  var diff_view = CodeMirror.MergeView($('#component_form')[0], {
+    value: current_value,
+    orig: origin,
+    lineNumbers: true,
+    mode: codemirror_mode,
+    highlightDifferences: true,
+    connect: 'align',
+    collapseIdentical: false,
+    lineWrapping: true
+  });
+
+  function mergeViewHeight(mergeView) {
+    function editorHeight(editor) {
+      if (!editor) return 0;
+      return editor.getScrollInfo().height;
+    }
+    return Math.max(editorHeight(mergeView.leftOriginal()),
+                    editorHeight(mergeView.editor()),
+                    editorHeight(mergeView.rightOriginal()));
+  }
+  function resize_merge_view(mergeView) {
+    var height = mergeViewHeight(mergeView) + 200;
+    for(;;) {
+      if (mergeView.leftOriginal())
+        mergeView.leftOriginal().setSize(null, height);
+      mergeView.editor().setSize(null, height);
+      if (mergeView.rightOriginal())
+        mergeView.rightOriginal().setSize(null, height);
+
+      var newHeight = mergeViewHeight(mergeView);
+      if (newHeight >= height) break;
+      else height = newHeight;
+    }
+    mergeView.wrap.style.height = height + "px";
+  }
+
+  resize_merge_view(diff_view);
+} else {
+// We are in current version, so highlight latest version as current
+  $('#versions>.version:first a, #versions>.version:first span').addClass('selected');
+}
+
+</script>

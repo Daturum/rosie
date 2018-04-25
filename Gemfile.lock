@@ -2,7 +2,17 @@ PATH
   remote: .
   specs:
     rosie (0.1.0)
+      bcrypt (~> 3.1.7)
+      fast_stack
+      flamegraph
+      jquery-rails
+      memory_profiler
+      paper_trail
+      pg
+      rack-mini-profiler
       rails (~> 5.2.0)
+      request_store
+      stackprof
 
 GEM
   remote: https://rubygems.org/
@@ -49,14 +59,21 @@ GEM
       minitest (~> 5.1)
       tzinfo (~> 1.1)
     arel (9.0.0)
+    bcrypt (3.1.11)
     builder (3.2.3)
     concurrent-ruby (1.0.5)
     crass (1.0.4)
     erubi (1.7.1)
+    fast_stack (0.2.0)
+    flamegraph (0.9.5)
     globalid (0.4.1)
       activesupport (>= 4.2.0)
     i18n (1.0.1)
       concurrent-ruby (~> 1.0)
+    jquery-rails (4.3.3)
+      rails-dom-testing (>= 1, < 3)
+      railties (>= 4.2.0)
+      thor (>= 0.14, < 2.0)
     loofah (2.2.2)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
@@ -64,6 +81,7 @@ GEM
       mini_mime (>= 0.1.1)
     marcel (0.3.2)
       mimemagic (~> 0.3.2)
+    memory_profiler (0.9.10)
     method_source (0.9.0)
     mimemagic (0.3.2)
     mini_mime (1.0.0)
@@ -72,8 +90,13 @@ GEM
     nio4r (2.3.0)
     nokogiri (1.8.2)
       mini_portile2 (~> 2.3.0)
+    paper_trail (9.0.1)
+      activerecord (>= 4.2, < 5.3)
+      request_store (~> 1.1)
     pg (1.0.0)
     rack (2.0.5)
+    rack-mini-profiler (1.0.0)
+      rack (>= 1.2.0)
     rack-test (1.0.0)
       rack (>= 1.0, < 3)
     rails (5.2.0)
@@ -101,6 +124,8 @@ GEM
       rake (>= 0.8.7)
       thor (>= 0.18.1, < 2.0)
     rake (12.3.1)
+    request_store (1.4.1)
+      rack (>= 1.4)
     sprockets (3.7.1)
       concurrent-ruby (~> 1.0)
       rack (> 1, < 3)
@@ -108,6 +133,7 @@ GEM
       actionpack (>= 4.0)
       activesupport (>= 4.0)
       sprockets (>= 3.0.0)
+    stackprof (0.2.11)
     thor (0.20.0)
     thread_safe (0.3.6)
     tzinfo (1.2.5)
@@ -120,7 +146,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  pg
   rosie!
 
 BUNDLED WITH

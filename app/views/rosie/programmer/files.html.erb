@@ -1,0 +1,30 @@
+<% # HTML %>
+<% cache "asset_files_index #{Rosie::AssetFile.cache_invalidation_key}" do %>
+
+  <% Rosie::AssetFile.order('updated_at').all.each do |file| %>
+    <%= link_to file.filename, asset_file_path(file.filename) %>&nbsp;<a href="#" class="delete">×</a>
+    <span style="color:gray"><%= Rosie::Programmer.short_name(file.versions.last.try(:whodunnit)) %> <%= file.updated_at.to_s(:short) %></span>
+    asset_file_path('<%=file.filename%>')
+    <br/>
+  <% end %>
+
+<% end %>
+<%= form_tag("?", multipart: true, method: "post") do %>
+  <br/>Upload new files<br/>
+  <%= check_box_tag('rewrite') %><%= label_tag 'rewrite' do %>Rewrite files with same names<% end %><br/>
+  <input name="files[]" type="file" multiple="multiple"
+    onchange="$(this).hide().parent().submit();"></input>
+<% end %>
+
+<% # JS %>
+<script>
+  $('a.delete').click(function(){
+    $.ajax({url: "?", type: "POST", data: {delete: $(this).prev().text()}}).
+      done(function(){window.location = '?';}).
+      error(function(jqXHR, textStatus, errorThrown){ alert('ERROR\n' + errorThrown); });
+    return false;
+  })
+</script>
+
+<% # CSS %>
+<style>a.delete { color: gray; text-decoration: none;}</style>

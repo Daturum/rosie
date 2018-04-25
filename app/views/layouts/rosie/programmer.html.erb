@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= "#{request[:action]} @ #{request.domain}" %></title>
+    <%= csrf_meta_tags %>
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,400i,700" rel="stylesheet">
+    <%= stylesheet_link_tag    "rosie/programmer", media: "all" %>
+    <style>
+      * { font-family: 'Roboto Mono', monospace; font-size: 12px;}
+      .menu a, .menu span { color: gray; }
+      .menu a { text-decoration-color: #ccc; }
+      .menu .selected {color: black; }
+      hr { border: none; border-top: #ddd solid 1px; }
+    </style>
+    <%= javascript_include_tag 'rosie/programmer' %>
+    <script>
+      $(document).ready(function(){
+        $('.main.menu a').each(function(){
+          if((window.location.pathname+window.location.search).startsWith($(this).attr('href')))
+            $(this).addClass('selected')
+        });
+      });
+      window.invite_programmer = function(){
+        $(this).attr('href', $(this).attr('href').split('?')[0]+'?email='+
+          encodeURIComponent(prompt('Enter email to invite')));
+      }
+    </script>
+  </head>
+
+  <body>
+    <div class="main menu">
+      <a href="/" target="_blank" style="color:gray;">Root</a>
+      <a href="/p/cns" target="_blank">Console</a>
+      <a href="/p/scenarios">Roles&amp;Scenarios</a>
+      <a href="/p/files">Files</a>
+      <a href="<%#health_check_path(access_token: HealthCheck.access_token)%>" target="_blank"
+        style="<%= "color:red" # if HealthCheck.check_for_errors.present?
+        %>">Health</a>
+      <a href="/p/guide">Readme</a>
+      <%= link_to "Invite", invite_programmer_path, method: 'POST', remote: true,
+        onclick: "invite_programmer.call(this);" %>
+
+      <span style="color:gray">| Analyze at runtime: ?__=</span>
+      <a href="/?__=c" target="_blank" title="Inject web-[C]onsole to a page">c</a>
+      <a href="/?__=t" target="_blank" title="(T)rack and display components, used by a page">t</a>
+      <a href="/?__=p" target="_blank" title="Profiler">p</a>
+      <a href="/?__=g" target="_blank" title="Garbage collector">g</a>
+      <a href="/?__=m" target="_blank" title="Memory profiler">m</a>
+      <a href="/?__=a" target="_blank" title="Analyze memory (object space)">a</a>
+      <a href="/?__=f" target="_blank" title="Flame graph">f</a>
+      <span style="float: right;"><%= Rosie::Programmer.short_name(Rosie::Programmer.current) %></span>
+    </div>
+    <%= yield %>
+    <%= render 'ajax_error_replay_for_programmer' %>
+  </body>
+</html>

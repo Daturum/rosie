@@ -1,0 +1,4 @@
+<div class="hints" style="color:gray;">
+  <%= hints = ComponentTypes.templates[@component.component_type][:hints];
+    ERB.new(hints, nil, "%").result(binding).html_safe if hints && @component.persisted? %>
+<div>

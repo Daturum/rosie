@@ -1,0 +1,16 @@
+<style>
+  #request_components { position:fixed; border: 1px solid #888;
+    border-bottom-left-radius: 12px; padding: 3px 8px; right: 0; top: 0; font-size: 12px;
+    z-index: 50000; background-color: #fff; border-right: none; border-top: none;
+    font-family: Consolas, monospace, serif; cursor: pointer; }
+  #request_components a { display: block; border-top: 1px solid #ccc;margin-top: 4px;
+    padding-top: 4px; color: black; text-decoration: none;}
+  #request_components span {color: gray; font-size: 10px;}
+</style>
+<div id="request_components">
+  <div onclick="$(this).nextAll().toggle();"><%= Component.request_components_usage.count %> <span>tpls</span></div>
+  <% Component.request_components_usage.to_a.reverse.each do |component_path, count| %>
+    <%= link_to "#{component_path}#{"<span> ×#{count}</span>" if count > 1}".html_safe,
+          programmer_component_path(component_path), target: :blank, style: 'display: none;' %>
+  <% end %>
+</div>

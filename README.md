@@ -30,7 +30,7 @@ Everything a user (and an interface programmer) needs to know is which objects t
 how to work with them.
 
 Let's look at our users as business roles - different roles use the system to do different tasks,
-and these tasks may require different approaches for interface. We need to provide high quality interfaces
+and these tasks may require different approaches to building interfaces. We need to provide high quality interfaces
 for our clients, but our admins and content managers may live fine with automatically generated admin panels.
 That's also the way to create tasks for interface programmers: an interface programmer gets
 the knowledge what a business role need to do (what user scenarios they need to perform).
@@ -63,17 +63,18 @@ When the work is done, the interface programmer asks the repository owner to dow
 # File structure
 Rosie adds a folder "app/interfaces" to the hosting application. The folder has this structure
 - interfaces
-- - role_1
-- - - layout.[format].[handler]
+- - role_1 (default is 'user')
+- - - layout/layout.[format].[handler]
 - - - layout/script.[format].[handler]
 - - - layout/style.[format].[handler]
-- - - scenario_1.[format].[handler]
+- - - scenario_1/scenario_1.[format].[handler] (default is 'start')
+- - - scenario_1/controller.rb
 - - - scenario_1/script.[format].[handler]
 - - - scenario_1/style.[format].[handler]
 - - - scenario_1/partial_1.[format].[handler]
 - - - scenario_1/partial_N.[format].[handler]
 - - - ...
-- - - scenario_N.[format].[handler]
+- - - scenario_N/scenario_N.[format].[handler]
 - - - ...
 - - role_2
 - - ...

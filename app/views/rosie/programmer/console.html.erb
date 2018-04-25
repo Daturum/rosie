@@ -1,0 +1,89 @@
+<% # HTML %>
+<div id="console" style="margin-top:20px">
+  <div id="results"></div>
+  <textarea id="console_text" autofocus="autofocus"
+    style="display:block; width:100%;"></textarea>
+  <span style="color:gray;">Use 'puts' to log, Ctrl/Cmd+Enter to run, 
+    Ctrl/Cmd+Shift+Enter to debug in new window, Ctrl/Cmd+Up/Down to view history</span>
+</div>
+
+<% # JS %>
+<script>
+  $(document).keydown(function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.keyCode == 13) { debug(); return false; }
+    if ((e.metaKey || e.ctrlKey) && e.keyCode == 13) { run(); return false; }
+    if ((e.metaKey || e.ctrlKey) && e.keyCode == 38) { historyGo(1); return false; }
+    if ((e.metaKey || e.ctrlKey) && e.keyCode == 40) { historyGo(-1); return false; }
+  });
+
+  function run() {
+    var $ta = $('textarea#console_text');
+    $ta.attr('disabled','disabled;');
+
+    var txt = $ta.val();
+
+    // storing in localStorage
+    var texts = JSON.parse(localStorage.getItem("texts")) || [];
+    if(texts[0] != txt) texts.unshift(txt);
+    if(texts.length > 100) texts.pop();
+    localStorage.setItem("texts", JSON.stringify(texts));
+
+    $.ajax({url: "go", type: "POST", data: { txt: txt }}).
+      done(function(result){
+        var $div = $('<div style="margin-bottom:20px;">' + result + '</div><hr/>').appendTo($("#results"));
+        window.scrollTo(0,document.body.scrollHeight);
+        $div.addClass('animated');
+      }).
+      fail(function(jqXHR, textStatus, errorThrown) {
+        alert('ERROR\n' + errorThrown)
+      }).
+      always(function(){
+        $ta.removeAttr('disabled').removeAttr('historyIndex').focus();
+      });
+  }
+  
+  // requires /app/views/programmer/ajax_error_replace to run
+  function debug()
+  {
+    postToUrl('go', {debug: true, txt: $('textarea#console_text').val()}, null, true);
+  }
+
+  function historyGo(direction)
+  {
+    var $ta = $('textarea#console_text');
+    var index = parseInt($ta.attr('historyIndex') || '-1') + direction;
+    $ta.val(JSON.parse(localStorage.getItem("texts"))[index]);
+    if(index >= 0) $ta.attr('historyIndex', index);
+    window.editor.setValue($ta.val());
+  }
+  
+  // Adding CodeMirror
+  window.editor = CodeMirror.fromTextArea(document.getElementById("console_text"), {
+    lineNumbers: true,
+    mode: "text/x-ruby",
+    indentWithTabs: false,
+    viewportMargin: Infinity,
+    lineWrapping: true,
+    matchBrackets: true
+  });
+  editor.getWrapperElement().style.height = 'auto';
+  editor.on('change', function(cm) {
+    editor.save();
+    $(cm.getWrapperElement()).attr('changed', 'changed');
+  }) ;
+
+  editor.focus();
+</script>
+
+<% # CSS %>
+
+<style>
+  #results div { 
+    background-color: rgba(187, 255, 187, 1); 
+    -webkit-transition: all 0.3s linear;
+    -ms-transition:     all 0.3s linear;
+    transition:         all 0.3s linear; }
+  #results div.animated {
+    background-color: rgba(255, 255, 255, 1);
+  }
+</style>
