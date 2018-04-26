@@ -10,7 +10,7 @@ module Rosie
     end
     def self.current= programmer_email
       raise "invalid parameter" if (programmer_email != nil) && !programmer_email.is_a?(String)
-      PaperTrail.whodunnit = programmer_email
+      PaperTrail.request.whodunnit = programmer_email
       RequestStore["programmer"] = programmer_email
     end
 

@@ -3,7 +3,11 @@
 
   <% Rosie::AssetFile.order('updated_at').all.each do |file| %>
     <%= link_to file.filename, asset_file_path(file.filename) %>&nbsp;<a href="#" class="delete">×</a>
-    <span style="color:gray"><%= Rosie::Programmer.short_name(file.versions.last.try(:whodunnit)) %> <%= file.updated_at.to_s(:short) %></span>
+    <span style="color:gray">
+      <%= number_to_human_size file.size %>,
+      <%= Rosie::Programmer.short_name(file.versions.last.try(:whodunnit)) %>,
+      <%= file.updated_at.to_s(:short) %>
+    </span>
     asset_file_path('<%=file.filename%>')
     <br/>
   <% end %>

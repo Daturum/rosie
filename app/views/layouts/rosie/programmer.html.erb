@@ -7,6 +7,7 @@
     <%= stylesheet_link_tag    "rosie/programmer", media: "all" %>
     <style>
       * { font-family: 'Roboto Mono', monospace; font-size: 12px;}
+      .main.menu { margin-bottom: 20px; }
       .menu a, .menu span { color: gray; }
       .menu a { text-decoration-color: #ccc; }
       .menu .selected {color: black; }
@@ -36,7 +37,7 @@
       <a href="<%#health_check_path(access_token: HealthCheck.access_token)%>" target="_blank"
         style="<%= "color:red" # if HealthCheck.check_for_errors.present?
         %>">Health</a>
-      <a href="/p/guide">Readme</a>
+      <a href="/p/readme">Readme</a>
       <%= link_to "Invite", invite_programmer_path, method: 'POST', remote: true,
         onclick: "invite_programmer.call(this);" %>
 

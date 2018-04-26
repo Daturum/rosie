@@ -8,7 +8,7 @@ module Rosie
       @component.update_lock! if @component && @component.persisted? && !@component.get_locking_programmer
     end
 
-    def guide
+    def readme
       render html: raw(%(<pre>#{
           File.read(Rosie::Engine.root.join 'README.md')}</pre>)),
         layout: 'rosie/programmer'
