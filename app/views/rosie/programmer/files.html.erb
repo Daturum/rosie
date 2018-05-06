@@ -16,7 +16,7 @@
 <%= form_tag("?", multipart: true, method: "post") do %>
   <br/>Upload new files<br/>
   <%= check_box_tag('rewrite') %><%= label_tag 'rewrite' do %>Rewrite files with same names<% end %><br/>
-  <input name="files[]" type="file" multiple="multiple"
+  <input name="files[]" type="file" multiple="multiple" webkitdirectory mozdirectory
     onchange="$(this).hide().parent().submit();"></input>
 <% end %>
 

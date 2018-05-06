@@ -149,6 +149,9 @@ module Rosie
 
       # saving file
       params[:files].each do |file|
+        # try to get the directory name from headers and add it to filename
+        file.original_filename = file.headers.match(
+          /[=:\"]([^=:\"]*#{file.original_filename})/).captures[0] rescue nil
         AssetFile[file.original_filename].try(:destroy!) if params[:rewrite]
         AssetFile.new(file: file).save!
       end

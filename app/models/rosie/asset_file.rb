@@ -33,7 +33,7 @@ module Rosie
       file = params.delete(:file)
       super
       if file
-        self.filename = File.basename(file.original_filename)
+        self.filename = file.original_filename
         self.content_type = file.content_type
         self.size = file.size
         self.file_contents = file.read
