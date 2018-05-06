@@ -51,7 +51,7 @@ When an interface programmer comes to project, they use favorite tools and envir
 Interfaces are isolated by roles and scenarios. It is possible but not recommended to use same components of interfaces in different roles.
 Interface programmers integrate the interface code in a browser via fast and easy communication with backed programmers. The data format can be arbitrary but it is advised to use standard json.
 
-That makes an interface task to be totally isolated, with the static json file as a part of a task. The integratioin into the system is the as simple as substitution of a static json by a dynamically generated one.
+That makes an interface task totally isolated, with the static json file (or any other form of structured information) as a part of a task. The integration into the system is the as simple as substitution of a static json by a dynamically generated one.
 
 Debugging and development is also performed in browser.
 The interface code reaches maximum maintainability as it is isolated from backed and sliced by roles and scenarios.
