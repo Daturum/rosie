@@ -36,4 +36,8 @@ Gem::Specification.new do |s|
   s.add_dependency 'jquery-rails'
 
   s.add_dependency "pg" # if you wish to help making rosie dbms-agnostic, please prepare MRs for TODO pg_dependency
+
+  # Access an IRB console on exception pages or by using <%= console %> anywhere in the code.
+  s.add_dependency 'web-console', '>= 3.3.0'
+
 end

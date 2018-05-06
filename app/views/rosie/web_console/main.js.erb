@@ -1,0 +1,23 @@
+REPLConsole.installInto('console');
+
+// Highlight error address to a link if it shows to code in Rosie DB
+
+if(document.getElementById('container')) try{
+  var error_p = document.getElementById('container').getElementsByTagName('p')[0],
+      component_error = error_p.innerText.split(/app\/tmp\/components\/[\+\d_-]+\//)[1];
+  if(component_error)
+  {
+    var parts = component_error.split(/[\. #]/), component_path = parts[0], line = parts[parts.length-2],
+  	file_path =  error_p.innerHTML.split(/<\/?i>/)[1];
+    error_p.innerHTML =
+      'Showing <i><a class="cursor:ponter" target="component_edit" href="/p/components?path='+encodeURIComponent(component_path)+'#'+line+':0">'+file_path+'</a></i> where line <b>#'+line+'</b> raised:';
+  }
+} catch(e) { console.log('error tweaking webconsole: '+e.toString()); }
+
+document.getElementsByTagName('header')[0].style.background = "rgba(171, 171, 171, 1)";
+
+// change /repl_sessions/ to /sns/ so network observers don't seek for security breaches
+// REPLConsole.prototype.oldGetSessionUrl = REPLConsole.prototype.getSessionUrl;
+// REPLConsole.prototype.getSessionUrl = function(path){
+//   return REPLConsole.prototype.oldGetSessionUrl(path).replace('repl_sessions', 'sns') ;
+// }
