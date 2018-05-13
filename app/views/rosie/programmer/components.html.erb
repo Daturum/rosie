@@ -124,7 +124,9 @@ document.title = '<%= @component.path %> - ' + document.title;
 
 var format = $('#format').val(),
   handler = $('#handler').val(),
-  codemirror_mode = (format == 'html' && handler == 'erb') ? "application/x-erb" :
+  codemirror_mode =
+    (format == 'html' && handler == 'erb') ? "application/x-erb" :
+    (format == 'json' && handler == 'erb') ? "application/x-erb" :
     (format == 'html' && handler == 'slim')   ? "application/x-slim" :
     (format == 'css'  && handler == 'raw')    ? "text/css" :
     (format == 'css'  && handler == 'scss')   ? "text/x-scss" :

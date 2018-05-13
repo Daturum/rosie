@@ -73,7 +73,7 @@ module Rosie
 
       if !Dir.exists?(components_directory)
         Rails.logger.info "Writing components to #{components_directory}"
-        FileUtils.rm_rf(components_directory) # erasing old releases
+        FileUtils.rm_rf(components_directory) # erasing old release
       end
       Rails.logger.info "Initializing rails components at #{components_directory}"
 
