@@ -1,19 +1,24 @@
 Rosie::Engine.routes.draw do
-  # test
-  root to: 'application#home'
-
   # Programmer area
-  get 'p/readme', to: 'programmer#readme'
-  get 'p/cns', to: 'programmer#console', as: :programmer_console
+  get  'p/readme', to: 'programmer#readme'
+  get  'p/cns', to: 'programmer#console', as: :programmer_console
   post 'p/go', to: 'programmer#go'
-  post '/p/invite_programmer', to: 'programmer#invite', as: :invite_programmer
-  
-  get 'p/files', to: 'programmer#files'
+  post 'p/invite_programmer', to: 'programmer#invite', as: :invite_programmer
+
+  get  'p/files', to: 'programmer#files'
   post 'p/files', to: 'programmer#manage_file'
 
+  get  "p/components", to: "programmer#components"
+  post "p/components", to: "programmer#manage_component"
+  put  "p/components", to: 'programmer#unlock_editing'
 
-  get 'asset_files/(*hashed_path)', to: 'client#get_asset_file'
-  get 'rosie_assets/(*hashed_path)', to: 'client#render_asset', constraints: lambda { |req|
-    (req.format == :css) || (req.format == :js) }
+  # User area
+  get  'asset_files/(*hashed_path)', to: 'client#get_asset_file'
+
+
+  match '/', to: 'client#render_component_template', via: [:get, :post], role: "user", scenario: "start"
+  match '/(:role(/:scenario(/:json_action)))', to: 'client#render_component_template',
+    as: :render_component_template, via: [:get, :post],
+      :defaults => { :role => "user", :scenario => "start" }
 
 end

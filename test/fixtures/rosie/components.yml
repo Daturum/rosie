@@ -1,0 +1,21 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  component_type: MyString
+  path: MyString
+  locale: MyString
+  handler: MyString
+  partial: false
+  format: MyString
+  body: MyText
+  editing_locked_by: MyString
+
+two:
+  component_type: MyString
+  path: MyString
+  locale: MyString
+  handler: MyString
+  partial: false
+  format: MyString
+  body: MyText
+  editing_locked_by: MyString

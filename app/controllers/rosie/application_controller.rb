@@ -7,7 +7,7 @@ module Rosie
     around_action :with_cookie_timezone
 
     helper_method :programmer_component_path, :current_path, :asset_file_path,
-      :component_hashed_http_path, :rosie_style_tag, :rosie_javascript_tag
+      :component_path, :component_url
 
     def show_detailed_exceptions?; !!session['is_programmer'] end
 
@@ -23,17 +23,21 @@ module Rosie
       end
     end
 
-
-        def home
-
-          render plain: 'Hello World! '+Rails.root.to_s
-        end
-
     private
 
     def programmer_component_path component_path;
       url_for only_path: true, controller: :programmer, action: :manage_component,
-        component_scope: Component[component_path].component_scope, path: component_path
+         path: component_path
+    end
+
+    def component_path(*args, &block)
+      result = render_component_template_path *args, &block
+      result = '/' if result == ''
+      result
+    end
+
+    def component_url(*args, &block)
+      render_component_template_url *args, &block
     end
 
     def with_cookie_timezone
@@ -73,16 +77,6 @@ module Rosie
     end
 
     def asset_file_path filename; AssetFile.hashed_path filename; end
-
-    def component_hashed_http_path path; Component.hashed_http_path path end
-
-    def rosie_style_tag path
-      ActionController::Base.helpers.stylesheet_link_tag component_hashed_http_path(path)
-    end
-
-    def rosie_javascript_tag path
-      ActionController::Base.helpers.javascript_include_tag component_hashed_http_path(path)
-    end
 
   end
 end

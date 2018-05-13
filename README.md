@@ -64,11 +64,12 @@ When the work is done, the interface programmer asks the repository owner to dow
 Rosie adds a folder "app/interfaces" to the hosting application. The folder has this structure
 - interfaces
 - - role_1 (default is 'user')
+- - - role_base_abstract_controller.rb
 - - - layout/layout.[format].[handler]
 - - - layout/script.[format].[handler]
 - - - layout/style.[format].[handler]
 - - - scenario_1/scenario_1.[format].[handler] (default is 'start')
-- - - scenario_1/controller.rb
+- - - scenario_1/scenario_controller.rb
 - - - scenario_1/script.[format].[handler]
 - - - scenario_1/style.[format].[handler]
 - - - scenario_1/partial_1.[format].[handler]

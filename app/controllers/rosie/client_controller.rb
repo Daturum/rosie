@@ -1,9 +1,11 @@
 module Rosie
   class ClientController < ApplicationController
-    protect_from_forgery with: :exception, except: [:render_asset, :get_asset_file]
-    around_action :with_handling_of_path_not_exists,          only: [:show_page, :render_asset]
-    after_action  :inject_request_components,                 only: :show_page
-    after_action  :inject_ajax_error_handling_for_programmer, only: :show_page
+    protect_from_forgery with: :exception, except: [:get_asset_file]
+    around_action :with_handling_of_path_not_exists,          only: [:get_asset_file, :render_component_template]
+    after_action  :inject_request_components,                 only: :render_component_template
+    after_action  :inject_ajax_error_handling_for_programmer, only: :render_component_template
+
+    prepend_view_path Rails.root.join('app', 'interfaces')
 
     def self.programmer_authentication_required?; false end
 
@@ -22,25 +24,14 @@ module Rosie
       send_data(@file.file_contents, type: @file.content_type, filename: @file.filename)
     end
 
-    def show_page
-      path = params[:path]
-      layout_path = "#{path.split('/')[0]}/layout"
-      layout = MemoryStore.fetch_invalidate "layout_path_for_#{path}", Programmer.last_action_timestamp do
-        (Component.where(path: layout_path).exists? ? layout_path : nil)
+    def render_component_template
+      path = [params[:role],params[:scenario],params[:json_action]].reject(&:blank?).join('/')
+      fmt = params[:format] || 'html'
+      layout_path = "#{params[:role]}/layout"
+      layout = MemoryStore.fetch_invalidate "layout_path_for_#{path}_#{fmt}", Programmer.last_action_timestamp do
+        (Component.where(path: layout_path, format: fmt).exists? ? layout_path : nil)
       end
-      render template: path, format: params[:format], layout: layout
-    end
-
-    def render_asset
-      @component = Component.get_asset_component_by_hashed_path(params[:hashed_path])
-      raise ActionController::RoutingError.new('Not Found') unless @component
-      if @component.format != request.format
-        raise "Different formats  (#{request.format.inspect} in request, #{
-          @component.format.inspect} in component)"
-      end
-      expires_in 1.year, :public => true
-      handler = @component.handler.in?(%w[sass scss]) ? 'raw' : @component.handler
-      render template: @component.path, format: @component.format, handler: @component.handler, layout: nil
+      render template: path, format: fmt, layout: layout
     end
 
     private
@@ -48,14 +39,14 @@ module Rosie
     def inject_request_components
       if Component.request_components_tracked?
         response.body = response.body.sub('</body>',
-          %(#{render_to_string 'programmer/_request_components_injection'}</body>))
+          %(#{render_to_string 'rosie/programmer/_request_components_injection'}</body>))
       end
     end
 
     def inject_ajax_error_handling_for_programmer
-      if Programmer.current
+      if Programmer.current && request.format == 'html'
         response.body = response.body.sub('</body>',
-          %(#{render_to_string 'programmer/_ajax_error_replay_for_programmer'}</body>))
+          %(#{render_to_string 'rosie/programmer/_ajax_error_replay_for_programmer', layout: nil}</body>))
       end
     end
 

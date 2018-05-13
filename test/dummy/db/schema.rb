@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_04_26_084958) do
+ActiveRecord::Schema.define(version: 2018_04_26_101535) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -22,6 +22,20 @@ ActiveRecord::Schema.define(version: 2018_04_26_084958) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "size"
+  end
+
+  create_table "rosie_components", force: :cascade do |t|
+    t.string "component_type"
+    t.string "path"
+    t.string "locale"
+    t.string "handler"
+    t.boolean "partial"
+    t.string "format"
+    t.text "body"
+    t.string "editing_locked_by"
+    t.text "loading_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "rosie_programmers", force: :cascade do |t|

@@ -5,9 +5,6 @@ require 'rails/all'
 Bundler.require(*Rails.groups)
 require "rosie"
 
-
-require 'web_console'
-
 module Dummy
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.

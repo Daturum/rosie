@@ -2,7 +2,6 @@ module Rosie
   class ProgrammerController < ApplicationController
     def self.programmer_authentication_required?; true end
     include ActionView::Helpers::TextHelper
-    before_action only: %w[components manage_component] do @component_scope = params[:component_scope] end
     after_action only: %w[manage_component manage_file] do Programmer.update_last_action_timestamp; end
     after_action only: %w[components manage_component] do
       @component.update_lock! if @component && @component.persisted? && !@component.get_locking_programmer
@@ -64,11 +63,10 @@ module Rosie
 
     def components
       if params[:path].blank? || (@component = Component.find_by(path: params[:path])).blank?
-        if params[:path] == 'NEW' || !Component.where(component_scope: @component_scope).exists?
+        if params[:path] == 'NEW' || !Component.exists?
           @component = Component.new(
-            component_scope: @component_scope,
             component_type: (params[:type] ||
-              Component.component_types[@component_scope].keys.first))
+              Component.component_types.keys.first))
           if(params[:context].blank?)
             redirect_to current_path(context: @component.permitted_contexts[0])
           else
@@ -79,7 +77,7 @@ module Rosie
             ).result(binding).strip
           end
         else
-          redirect_to path: Component.where(component_scope: @component_scope).first.path
+          redirect_to path: Component.first.path
         end
       end
     end
@@ -96,7 +94,7 @@ module Rosie
       raise "No original path given" unless params.has_key?(:original_path)
       original_path = params[:original_path]
       @component = ((original_path != "") ? Component.find_by(path: original_path) :
-        Component.new(component_scope: @component_scope, component_type: params[:new_component_type]));
+        Component.new(component_type: params[:new_component_type]));
 
       if @component.persisted? && (params[:latest_version_timestamp].to_i != @component.latest_version_timestamp)
         raise "This component was modified #{params[:latest_version_timestamp].to_i} #{@component.latest_version_timestamp}"
@@ -125,10 +123,6 @@ module Rosie
       end
     end
 
-    def redirect_to_current_hashed_asset_path
-      redirect_to Component.hashed_http_path(params[:path])
-    end
-
     def unlock_editing
       if params[:unlock] && @component = Component.find_by(path: params[:unlock])
         @component.unlock_editing!
@@ -151,7 +145,9 @@ module Rosie
       params[:files].each do |file|
         # try to get the directory name from headers and add it to filename
         file.original_filename = file.headers.match(
-          /[=:\"]([^=:\"]*#{file.original_filename})/).captures[0] rescue nil
+          /[=:\"]([^=:\"]*#{file.original_filename})/).captures[0] rescue Rails.logger.info(
+            "Could not get original filename with directory for #{file.headers}")
+
         AssetFile[file.original_filename].try(:destroy!) if params[:rewrite]
         AssetFile.new(file: file).save!
       end
