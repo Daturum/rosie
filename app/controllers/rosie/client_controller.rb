@@ -21,7 +21,17 @@ module Rosie
       @file = AssetFile.get_file_by_hashed_path(params[:hashed_path])
       raise ActionController::RoutingError.new('Not Found') unless @file
       expires_in 1.year, :public => true
-      send_data(@file.file_contents, type: @file.content_type, filename: @file.filename)
+      contents = @file.file_contents
+
+      #autoreplace asset filepaths inside js or css if needed
+      if @file.autoreplace_filepaths
+        Rosie::AssetFile.pluck(:filename).each do |filename| if !filename.match(/\.(css|js)$/)
+          variants = ["../#{filename}", "./#{filename}", "/#{filename}", filename]
+          variants.each do |variant| contents.gsub! variant, asset_file_path(filename) end
+        end end
+      end
+
+      send_data(contents, type: @file.content_type, filename: @file.filename, disposition: :inline)
     end
 
     def render_component_template

@@ -148,10 +148,38 @@ module Rosie
           /[=:\"]([^=:\"]*#{file.original_filename})/).captures[0] rescue Rails.logger.info(
             "Could not get original filename with directory for #{file.headers}")
 
+        # ignore outer directory if needed
+        if params[:remove_outer_directory_from_filepath] && file.original_filename.include?('/')
+          segments = file.original_filename.split('/')
+          file.original_filename = segments[1..-1].join('/')
+        end
+
+        # autoreplace filepaths in css and js files
+        autoreplace = nil
+        if params[:autoreplace_filepaths_in_css_and_js_files]
+          autoreplace = AssetFile.css_or_js?(file.original_filename)
+        end
+
+        # rewrite
         AssetFile[file.original_filename].try(:destroy!) if params[:rewrite]
-        AssetFile.new(file: file).save!
+        AssetFile.new(file: file, autoreplace_filepaths: autoreplace).save!
       end
-      redirect_back fallback_location: root_path
+
+      Programmer.update_last_action_timestamp
+      redirect_back fallback_location: '/p/files'
+    end
+
+    def autoreplace_filepaths_in_html_component
+      component = Component.find_by(path: params[:component_path])
+      body = component.body
+      Rosie::AssetFile.pluck(:filename).each do |filename|
+        variants = ["../#{filename}", "./#{filename}", "/#{filename}", filename]
+        variants.each do |variant| body.gsub! variant, "<%=asset_file_path('#{filename}')%>" end
+      end
+      component.update_attribute :body, body
+
+      Programmer.update_last_action_timestamp
+      render js: "alert('success'); window.location = window.location";
     end
 
     private

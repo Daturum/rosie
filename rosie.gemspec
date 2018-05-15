@@ -40,4 +40,7 @@ Gem::Specification.new do |s|
   # Access an IRB console on exception pages or by using <%= console %> anywhere in the code.
   s.add_dependency 'web-console', '>= 3.3.0'
 
+  # Add rack-cache for asset_files
+  s.add_dependency 'rack-cache'
+
 end

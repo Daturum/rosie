@@ -12,7 +12,10 @@ module Rosie
     end
 
     def self.get_file_by_hashed_path hashed_path
-      hash, filename = hashed_path.split("__", 2)
+      segments = hashed_path.split('/')
+      hash, last_segment = segments[-1].split("__", 2)
+      segments[-1] = last_segment
+      filename = segments.join('/')
       @file = find_by(filename: filename)
       @file.cache_hash == hash ? @file : nil
     end
@@ -20,14 +23,21 @@ module Rosie
     def self.hashed_path filename
       MemoryStore.fetch_invalidate "AssetFile.http_hashed_path #{filename}", cache_invalidation_key do
         file = find_by(filename: filename)
-        !file ? nil : "/asset_files/#{file.cache_hash}__#{URI.escape filename}"
+        if file
+          segments = filename.split('/').map{|s| URI.escape s}
+          segments[-1] = "#{file.cache_hash}__#{segments[-1]}"
+          "/files/#{segments.join('/')}"
+        else
+          nil
+        end
       end
     end
 
     def self.[] filename; find_by(filename: filename) end
 
-    # INSTANCE METHODS
+    def self.css_or_js? filename; !!filename.match(/\.(css|js)$/) end
 
+    # INSTANCE METHODS
 
     def initialize(params = {})
       file = params.delete(:file)
@@ -41,7 +51,8 @@ module Rosie
     end
 
     def cache_hash
-      "#{updated_at.to_i}#{filename}#{Rails.application.secrets.secret_key_base}".hash.to_s[-5..-1]
+      autoreplace_key = '' # autoreplace_filepaths ? Programmer.last_action_timestamp : ''
+      "#{autoreplace_key}#{updated_at.to_i}#{filename}#{Rails.application.secrets.secret_key_base}".hash.to_s[-5..-1]
     end
   end
 end

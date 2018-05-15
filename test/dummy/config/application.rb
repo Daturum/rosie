@@ -2,6 +2,8 @@ require_relative 'boot'
 
 require 'rails/all'
 
+require 'rack/cache'
+
 Bundler.require(*Rails.groups)
 require "rosie"
 
@@ -15,6 +17,15 @@ module Dummy
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
 
+    # Use Rack::Cache for asset files
+    config.middleware.use Rack::Cache,
+      :verbose => true,
+      :metastore   => 'file:tmp/cache/rack/meta',
+      :entitystore => 'file:tmp/cache/rack/body'
+
     require Rosie::Engine.config.root.join('lib', 'rosie', 'web_console_config.rb')
+
+
+
   end
 end

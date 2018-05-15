@@ -4,6 +4,7 @@
   <% Rosie::AssetFile.order('updated_at').all.each do |file| %>
     <%= link_to file.filename, asset_file_path(file.filename) %>&nbsp;<a href="#" class="delete">×</a>
     <span style="color:gray">
+      <% if file.autoreplace_filepaths %><span title="Autoreplace filepaths">*</span><% end %>
       <%= number_to_human_size file.size %>,
       <%= Rosie::Programmer.short_name(file.versions.last.try(:whodunnit)) %>,
       <%= file.updated_at.to_s(:short) %>
@@ -16,6 +17,11 @@
 <%= form_tag("?", multipart: true, method: "post") do %>
   <br/>Upload new files<br/>
   <%= check_box_tag('rewrite') %><%= label_tag 'rewrite' do %>Rewrite files with same names<% end %><br/>
+  <%= check_box_tag('remove_outer_directory_from_filepath') %><%=
+    label_tag 'remove_outer_directory_from_filepath' do %>Remove outer directory from filepath<% end %><br/>
+  <%= check_box_tag('autoreplace_filepaths_in_css_and_js_files') %><%=
+    label_tag 'autoreplace_filepaths_in_css_and_js_files' do %>Autoreplace filepaths in css and js files<% end %><br/>
+
   <input name="files[]" type="file" multiple="multiple" webkitdirectory mozdirectory
     onchange="$(this).hide().parent().submit();"></input>
 <% end %>

@@ -9,6 +9,7 @@ PATH
       memory_profiler
       paper_trail
       pg
+      rack-cache
       rack-mini-profiler
       rails (~> 5.2.0)
       request_store
@@ -97,6 +98,8 @@ GEM
       request_store (~> 1.1)
     pg (1.0.0)
     rack (2.0.5)
+    rack-cache (1.7.2)
+      rack (>= 0.4)
     rack-mini-profiler (1.0.0)
       rack (>= 1.2.0)
     rack-test (1.0.0)

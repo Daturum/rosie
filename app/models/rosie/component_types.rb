@@ -11,6 +11,12 @@ module Rosie
     end
 
     def self.templates
+      autoreplace_filepaths_link =  <<~AUTOREPLACE_LINK
+        <%= link_to 'Autoreplace filepaths to dynamically generated for uploaded files',
+          url_for(controller: 'rosie/programmer', action: 'autoreplace_filepaths_in_html_component',
+          component_path: @component.path), method: :post, remote: true, confirm: "Are you sure?" %>
+      AUTOREPLACE_LINK
+
       @@component_templates ||= {
         role: {
           prompt: 'Enter role name underscored (e.g. admins, moderators, report_viewers)',
@@ -35,15 +41,18 @@ module Rosie
         },
         scenario: {
           prompt: 'Enter scenario name underscored (e.g. manage_blog_posts, check_user_reports)',
-          hints: 'Run this scenario: <%= link_to @component.path,
-            component_path(role: @component.base_context, scenario: @component.name), target: :_blank %>',
+          hints: <<~SCENARIO_HINTS,
+            Run this scenario: <%= link_to @component.path,
+            component_path(role: @component.base_context, scenario: @component.name), target: :_blank %><br>
+            #{autoreplace_filepaths_link}
+          SCENARIO_HINTS
           template: <<~SCENARIO_TEMPLATE
             <h1>Start scenario</h1>
             <%%= link_to "What's the time?", url_for(json_action: :get_current_time, some_param: 'some_val'),
             	id: "get_time_link", method: 'POST', remote: true, data:{type: :json, disable_with: 'Please wait...'} %>
             <script>
               $(document).on('ajax:success', '#get_time_link', function(event, data, status, xhr) {
-                $(this).after('<br/>'+data.time.toString());
+                $(this).after('<br/>'+data.time);
               });
             </script>
           SCENARIO_TEMPLATE
@@ -58,6 +67,7 @@ module Rosie
           hints: <<~PARTIAL_HINTS
             Use this partial:
             render '<%= @component.path %>', param1: value1, param2: value2...'
+            <br/>#{autoreplace_filepaths_link}
           PARTIAL_HINTS
         },
         json_action: {
