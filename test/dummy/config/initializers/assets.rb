@@ -1,3 +1,8 @@
+require 'rosie'
+
+# Require static assets of Rosie engine
+require Rosie::Engine.root.join('config', 'initializers', 'assets.rb')
+
 # Be sure to restart your server when you modify this file.
 
 # Version of your assets, change this if you want to expire all your assets.
