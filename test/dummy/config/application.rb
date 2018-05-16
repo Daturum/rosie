@@ -23,9 +23,11 @@ module Dummy
       :metastore   => 'file:tmp/cache/rack/meta',
       :entitystore => 'file:tmp/cache/rack/body'
 
-    require Rosie::Engine.config.root.join('lib', 'rosie', 'web_console_config.rb')
+    # Use webconsole to debug in production
+    require Rosie::Engine.root.join('lib', 'rosie', 'web_console_config.rb')
 
-
+    # Require static assets of Rosie engine
+    require Rosie::Engine.root.join('config', 'initializers', 'assets.rb')
 
   end
 end
