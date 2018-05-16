@@ -49,10 +49,14 @@ module Rosie
         self.file_contents = file.read
       end
     end
-
     def cache_hash
-      autoreplace_key = '' # autoreplace_filepaths ? Programmer.last_action_timestamp : ''
-      "#{autoreplace_key}#{updated_at.to_i}#{filename}#{Rails.application.secrets.secret_key_base}".hash.to_s[-5..-1]
+      Digest::MD5.hexdigest("#{updated_at.to_i}#{filename}#{
+        Rails.application.secrets.secret_key_base}")[-5..-1]
+    end
+    def cache_hash
+      autoreplace_key = autoreplace_filepaths ? Programmer.last_action_timestamp : ''
+      key = "#{autoreplace_key}#{updated_at.to_i}#{filename}#{Rails.application.secrets.secret_key_base}"
+      hash = Digest::MD5.hexdigest(key)[-5..-1]
     end
   end
 end
