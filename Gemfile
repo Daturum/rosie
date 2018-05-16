@@ -13,3 +13,6 @@ gemspec
 
 # To use a debugger
 # gem 'byebug', group: [:development, :test]
+
+# rosemary is build with and tested with puma
+gem 'puma'
