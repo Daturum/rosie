@@ -24,6 +24,7 @@ end
 # Add direct rosie template view and edit links
 Rails.application.config.web_console.template_paths = Rosie::Engine.root.join('app/views/rosie/web_console')
 Rails.application.config.web_console.development_only = false
+Rails.application.config.web_console.whiny_requests = !Rails.env.production?
 
 # Remount so it is not mounted to obvious standard route
 if(!Rails.application.config.web_console.mount_point ||
