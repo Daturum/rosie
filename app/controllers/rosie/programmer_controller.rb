@@ -161,7 +161,7 @@ module Rosie
         end
 
         # rewrite
-        AssetFile[file.original_filename].try(:destroy!) if params[:rewrite]
+        AssetFile.where(filename: file.original_filename).delete_all if params[:rewrite]
         AssetFile.new(file: file, autoreplace_filepaths: autoreplace).save!
       end
 
@@ -179,7 +179,7 @@ module Rosie
       component.update_attribute :body, body
 
       Programmer.update_last_action_timestamp
-      render js: "alert('success'); window.location = window.location";
+      render js: "alert('success'); window.location.reload(true)";
     end
 
     private
