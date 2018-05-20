@@ -141,8 +141,8 @@ module Rosie
     def manage_file
       AssetFile.transaction do
         # deleting file
-        if params[:delete] && @file = AssetFile.find_by(filename: params[:delete])
-          @file.destroy!
+        if params[:delete] && AssetFile.where(filename: params[:delete]).exists?
+          AssetFile.where(filename: params[:delete]).delete_all
           render js: "window.location = '?'";
           return
         end
