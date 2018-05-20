@@ -14,8 +14,6 @@ module Rosie
     validates :name,            format: /\A[a-z0-9_]+\z/i
     serialize :loading_error,   ActiveSupport::HashWithIndifferentAccess
 
-    after_update :clear_views_cache
-
     # CLASS METHODS
 
     def self.component_types
@@ -133,10 +131,6 @@ module Rosie
     def cache_hash
       "#{body}#{path}#{Rails.application.secrets.secret_key_base}#{
         AssetFile.cache_invalidation_key}".hash.to_s[-8..-1]
-    end
-
-    def clear_views_cache
-      Rosie::ClientController.view_paths.each(&:clear_cache)
     end
 
   end

@@ -7,6 +7,7 @@ module Rosie
         scenario:     {formats: 'html', handlers: %w[erb slim],      context_types: %w[role],         occurence: 'multiple' },
         partial:      {formats: 'html', handlers: %w[erb slim],      context_types: %w[layout scenario], occurence: 'multiple' },
         json_action:  {formats: 'json', handlers: %w[erb],           context_types: %w[scenario],     occurence: 'multiple' },
+        autoload_lib: {formats: 'text', handlers: %w[ruby],          context_types: %w[layout scenario], occurence: 'multiple' },
       }.with_indifferent_access.freeze
     end
 
@@ -66,7 +67,7 @@ module Rosie
           PARTIAL_TEMPLATE
           hints: <<~PARTIAL_HINTS
             Use this partial:
-            render '<%= @component.path %>', param1: value1, param2: value2...'
+            <%%= render '<%= @component.path %>', param1: value1, param2: value2...' %>
             <br/>#{autoreplace_filepaths_link}
           PARTIAL_HINTS
         },
@@ -79,13 +80,38 @@ module Rosie
             json_action: @component.name, format: @component.format),
             target: "c\#{@component.try :id}", method: :post %><br/>
           ACTION_HINTS
+        },
+        autoload_lib: {
+          prompt: 'Enter library name underscored (e.g. email_settings, queue_initializer)',
+          template: <<~LIB_TEMPLATE,
+            class Rosie::<%= @component.name.classify %>
+              # write your code here
+            end
+          LIB_TEMPLATE
+          hints: <<~LIB_HINTS
+          <pre>
+          Autoload lib is a component to store generic purpose code that is autoloaded on application initialization.
+          Autoload lib is loaded in context of hosting application.
+          Use autoload lib to:
+          - control access to json actions via augmenting Rosie::ClientController
+          - define custom layouts for scenarios rendering
+          - control or redefine engine routes (use with caution)
+          - create code libraries to prepare ViewModels for scenarios (MVVM architecture)
+          Do not use autoload to:
+          - Slow code (the load timeout is #{
+            ComponentLoaderMiddleware.code_loading_timeout_in_seconds} seconds)
+          - write complex business logic (do it in hosting application)
+          - monkey patch, configure or anyhow redefine begavior of hosting application
+          - store large constants or data sets
+          </pre>
+          LIB_HINTS
         }
       }.with_indifferent_access.freeze
     end
 
-    def self.seed_db_with_first_request request
-      if Component.table_exists?
-        Rails.logger.info "Seeding the database with first request"
+    def self.seed_db_on_first_request
+      if 'Rosie::Component'.safe_constantize.try :table_exists?
+        Rails.logger.info "Seeding the database on first request"
         [ %w[role user text raw],
           %w[layout user/layout html erb],
           %w[scenario user/start html erb],

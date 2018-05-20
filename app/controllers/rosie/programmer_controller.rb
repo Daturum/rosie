@@ -83,50 +83,55 @@ module Rosie
     end
 
     def manage_component
-      # deleting component
-      if params[:delete] && @component = Component.find_by(path: params[:delete])
-        @component.destroy!
-        render js: "window.location = '?'";
-        return
-      end
+      Component.transaction do
 
-      # creating or updating component
-      raise "No original path given" unless params.has_key?(:original_path)
-      original_path = params[:original_path]
-      @component = ((original_path != "") ? Component.find_by(path: original_path) :
-        Component.new(component_type: params[:new_component_type]));
+        # deleting component
+        if params[:delete] && @component = Component.find_by(path: params[:delete])
+          @component.destroy!
+          render js: "window.location = '?'";
+          return
+        end
 
-      if @component.persisted? && (params[:latest_version_timestamp].to_i != @component.latest_version_timestamp)
-        raise "This component was modified #{params[:latest_version_timestamp].to_i} #{@component.latest_version_timestamp}"
-      end
+        # creating or updating component
+        raise "No original path given" unless params.has_key?(:original_path)
+        original_path = params[:original_path]
+        @component = ((original_path != "") ? Component.find_by(path: original_path) :
+          Component.new(component_type: params[:new_component_type]));
 
-      component_had_errors_before_update = @component.loading_error.present?
+        if @component.persisted? && (params[:latest_version_timestamp].to_i != @component.latest_version_timestamp)
+          raise "This component was modified #{params[:latest_version_timestamp].to_i} #{@component.latest_version_timestamp}"
+        end
 
-      @component.set_context_and_name(params[:context], params[:name])
+        component_had_errors_before_update = @component.loading_error.present?
 
-      @component.update!(
-        body: params[:body],
-        format: params[:format],
-        handler: params[:handler])
+        @component.set_context_and_name(params[:context], params[:name])
 
-      @component.delete_recent_versions_of_current_programmer_except_latest
+        @component.update!(
+          body: params[:body],
+          format: params[:format],
+          handler: params[:handler])
 
-      ComponentLoaderMiddleware.current.load_or_reload @component
+        @component.delete_recent_versions_of_current_programmer_except_latest
 
-      if(original_path != @component.path)
-        render js: "window.location = '?path=#{@component.path}'"
-      elsif((@component.loading_error.present?) || (component_had_errors_before_update))
-        render js: "window.location.reload()";
-      else
-        render js: "$('[data-latest-version-timestamp]').data('latest-version-timestamp', #{
-          @component.latest_version_timestamp}); window.setOrResetLockTimeout();"
+        ComponentLoaderMiddleware.current.load_or_reload @component
+
+        if(original_path != @component.path)
+          render js: "window.location = '?path=#{@component.path}'"
+        elsif((@component.loading_error.present?) || (component_had_errors_before_update))
+          render js: "window.location.reload()";
+        else
+          render js: "$('[data-latest-version-timestamp]').data('latest-version-timestamp', #{
+            @component.latest_version_timestamp}); window.setOrResetLockTimeout();"
+        end
       end
     end
 
     def unlock_editing
-      if params[:unlock] && @component = Component.find_by(path: params[:unlock])
-        @component.unlock_editing!
-        render plain: 'OK'
+      Programmer.transaction do
+        if params[:unlock] && @component = Component.find_by(path: params[:unlock])
+          @component.unlock_editing!
+          render plain: 'OK'
+        end
       end
     end
 
@@ -134,38 +139,40 @@ module Rosie
     end
 
     def manage_file
-      # deleting file
-      if params[:delete] && @file = AssetFile.find_by(filename: params[:delete])
-        @file.destroy!
-        render js: "window.location = '?'";
-        return
-      end
-
-      # saving file
-      params[:files].each do |file|
-        # try to get the directory name from headers and add it to filename
-        file.original_filename = file.headers.match(
-          /[=:\"]([^=:\"]*#{file.original_filename})/).captures[0] rescue Rails.logger.info(
-            "Could not get original filename with directory for #{file.headers}")
-
-        # ignore outer directory if needed
-        if params[:remove_outer_directory_from_filepath] && file.original_filename.include?('/')
-          segments = file.original_filename.split('/')
-          file.original_filename = segments[1..-1].join('/')
+      AssetFile.transaction do
+        # deleting file
+        if params[:delete] && @file = AssetFile.find_by(filename: params[:delete])
+          @file.destroy!
+          render js: "window.location = '?'";
+          return
         end
 
-        # autoreplace filepaths in css and js files
-        autoreplace = nil
-        if params[:autoreplace_filepaths_in_css_and_js_files]
-          autoreplace = AssetFile.css_or_js?(file.original_filename)
+        # saving file
+        params[:files].each do |file|
+          # try to get the directory name from headers and add it to filename
+          file.original_filename = file.headers.match(
+            /[=:\"]([^=:\"]*#{file.original_filename})/).captures[0] rescue Rails.logger.info(
+              "Could not get original filename with directory for #{file.headers}")
+
+          # ignore outer directory if needed
+          if params[:remove_outer_directory_from_filepath] && file.original_filename.include?('/')
+            segments = file.original_filename.split('/')
+            file.original_filename = segments[1..-1].join('/')
+          end
+
+          # autoreplace filepaths in css and js files
+          autoreplace = nil
+          if params[:autoreplace_filepaths_in_css_and_js_files]
+            autoreplace = AssetFile.css_or_js?(file.original_filename)
+          end
+
+          # rewrite
+          AssetFile.where(filename: file.original_filename).delete_all if params[:rewrite]
+          AssetFile.new(file: file, autoreplace_filepaths: autoreplace).save!
         end
 
-        # rewrite
-        AssetFile.where(filename: file.original_filename).delete_all if params[:rewrite]
-        AssetFile.new(file: file, autoreplace_filepaths: autoreplace).save!
+        Programmer.update_last_action_timestamp
       end
-
-      Programmer.update_last_action_timestamp
       redirect_back fallback_location: '/p/files'
     end
 

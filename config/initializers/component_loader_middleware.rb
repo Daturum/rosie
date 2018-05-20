@@ -1,10 +1,11 @@
 module Rosie
   class ComponentLoaderMiddleware
+    @@currently_loaded_components_directory_mtime = nil
+    def self.code_loading_timeout_in_seconds; 0.5 end
 
     def initialize app
       @app = app
     end
-
     def self.current
       RequestStore["ComponentLoaderMiddleware.current"]
     end
@@ -12,7 +13,6 @@ module Rosie
       RequestStore["ComponentLoaderMiddleware.current"] = value
     end
 
-    @@currently_loaded_components_directory = nil
     def components_directory # this is thread safe
       begin
         RequestStore["components_directory"] ||=
@@ -22,11 +22,18 @@ module Rosie
       end
     end
 
-    def initialization_required?
-      #Rails.logger.info "Checking initialization required:\ncomponents_directory #{components_directory}\nDir.exists?(components_directory) #{Dir.exists?(components_directory)}\n@@currently_loaded_components_directory != components_directory #{@@currently_loaded_components_directory != components_directory}"
+    def component_write_files_required?
+      return false unless 'Rosie::Component'.safe_constantize.try :table_exists?
+      Rails.logger.info "Checking WRITE_required:\ncomponents_directory #{components_directory}\nDir.exists?(components_directory) #{Dir.exists?(components_directory)}\nFile.mtime(components_directory).to_i: #{File.mtime(components_directory).to_i}\n'Rosie::Programmer'.constantize.last_action_timestamp.to_i: #{'Rosie::Programmer'.constantize.last_action_timestamp.to_i}\nThread.current.object_id: #{Thread.current.object_id}"
       components_directory &&                                                  # if components and programmers exist in database
         (!Dir.exists?(components_directory) ||                                   # if these components aren't written to files
-        (File.mtime(components_directory).to_i != Rosie::Programmer.last_action_timestamp.to_i))    # or current loaded version is obsolete
+        (File.mtime(components_directory).to_i != 'Rosie::Programmer'.constantize.last_action_timestamp.to_i))    # or current loaded version is obsolete
+    end
+
+    def initialization_required?
+      Rails.logger.info "Checking INITIALIZATION_required:\n@@urrently_loaded_components_directory_mtime: #{@@currently_loaded_components_directory_mtime}\nFile.mtime(components_directory).to_i: #{File.mtime(components_directory).to_i}\nThread.current.object_id: #{Thread.current.object_id}"
+      component_write_files_required? ||
+        (@@currently_loaded_components_directory_mtime != File.mtime(components_directory).to_i)
     end
 
     def call env
@@ -35,14 +42,14 @@ module Rosie
 
     def threadsafe_call env
       self.class.current = self
-      Rails.logger.info "currently_loaded_components_directory: #{@@currently_loaded_components_directory}"
-      check_and_initialize_rails_components_if_needed(env)
+      check_and_initialize_rails_components_if_needed
+      @@currently_loaded_components_directory_mtime = File.mtime(components_directory).to_i
       result = @app.call(env)
       self.class.current = nil
       return result
     end
 
-    def check_and_initialize_rails_components_if_needed(env)
+    def check_and_initialize_rails_components_if_needed
       if initialization_required?
         lock_file_path = Rails.root.join('tmp', 'component_loader.lock')
         FileUtils.touch(lock_file_path) unless File.exists?(lock_file_path)
@@ -51,12 +58,17 @@ module Rosie
         exclusive_file_lock = File.new(lock_file_path)
         begin
           Rails.logger.info "Intending to exclusively lock file #{lock_file_path}"
-          exclusive_file_lock.flock(File::LOCK_EX) # multi-process lock
-          Rails.logger.info "Locked file exclusively #{lock_file_path}"
-          if (initialization_required?) then # if still need to reinitialize after obtaining exclusive lock
-            Rails.logger.info "Initializing components in #{components_directory}"
-            write_components_to_files_and_initialize_rails_components(env)
-          end
+            exclusive_file_lock.flock(File::LOCK_EX) # multi-process lock
+            Rails.logger.info "Locked file exclusively #{lock_file_path}"
+            load_timeout = 1 + self.class.code_loading_timeout_in_seconds *
+              ('Rosie::Component'.safe_constantize.try(
+                :where, component_type: %w[autoload_lib]).try(:count) || 0)
+            Timeout::timeout(load_timeout) do
+              if (initialization_required?) then # if still need to reinitialize after obtaining exclusive lock
+                Rails.logger.info "Initializing components in #{components_directory} (timeout #{load_timeout})"
+                write_components_to_files_and_initialize_rails_components
+              end
+            end
         rescue Exception => e
           Rails.logger.warn "Error during initalization: #{e.inspect} \n#{e.backtrace.join("\n")}"
         ensure
@@ -66,21 +78,22 @@ module Rosie
       end
     end
 
-    def write_components_to_files_and_initialize_rails_components(env)
-      if ('Rosie::Component'.constantize.table_exists? && !'Rosie::Component'.constantize.exists?)
-        'Rosie::ComponentTypes'.constantize.seed_db_with_first_request(Rack::Request.new(env))
-      end
-
-      if !Dir.exists?(components_directory)
-        Rails.logger.info "Writing components to #{components_directory}"
-        FileUtils.rm_rf(components_directory) # erasing old release
-      end
-      Rails.logger.info "Initializing rails components at #{components_directory}"
-
+    def write_components_to_files_and_initialize_rails_components
       if !'Rosie::Component'.constantize.table_exists?
         Rails.logger.info 'Components table does not exists, aborting component initialization'
         return
       end
+
+      if ('Rosie::Component'.constantize.table_exists? && !'Rosie::Component'.constantize.exists?)
+        'Rosie::ComponentTypes'.constantize.seed_db_with_first_request
+      end
+
+      if(component_write_files_required?)
+        Rails.logger.info "Deleting old files (component_write_files_required)"
+        FileUtils.rm_rf(components_directory)
+      end
+      Rails.logger.info "Initializing rails components at #{components_directory}"
+
 
       # loading components
       'Rosie::Component'.constantize.all.each do |component| load_or_reload component end
@@ -91,7 +104,8 @@ module Rosie
       @@currently_loaded_components_directory = components_directory
       FileUtils.touch components_directory, :mtime => Rosie::Programmer.last_action_timestamp
 
-  end
+      'Rosie::ClientController'.constantize.view_paths.each{|view_path| view_path.try :clear_cache}
+    end
 
     def filepath component
       base_dir = components_directory
@@ -104,7 +118,7 @@ module Rosie
       end
 
       base_dir.join("#{component_path}.#{component.format}.#{component.handler}").to_s.
-        sub(/\.ruby$/,'.rb') #sub('.json.','.').
+        sub(/\.ruby$/,'.rb').sub('.text.','.') #sub('.json.','.').
     end
 
     def load_or_reload component
@@ -113,27 +127,20 @@ module Rosie
 
       FileUtils.mkdir_p(File.dirname component_filepath)
       File.write(component_filepath, component.body)
-      if component.component_type.in?(%w[controller active_job initializer])
-        'Rosie::Component'.constantize.remove_defined_classnames component
-
-        component_classname = component.defined_classname
-        Rails.logger.info("Initializing component #{component.path} (classname #{component_classname})")
-        component_loaded = false
+      if component.component_type.in?(%w[autoload_lib])
+        Rails.logger.info("Initializing component #{component.path}")
         begin
-          Timeout::timeout(2) { Kernel.load(component_filepath) } rescue raise("Timeout loading #{component_filepath}")
-          if component.component_type.in?(%w[controller active_job]) && !component_classname.safe_constantize
-            raise(TypeError, %(Component #{component_filepath} does not define class '#{component_classname}'))
-          end
+          Timeout::timeout(self.class.code_loading_timeout_in_seconds) {
+            Kernel.load(component_filepath)
+          } rescue raise("Timeout loading #{component_filepath}")
 
           component_loaded = true
           component.update_attribute(:loading_error, nil)
           component.loading_error = nil
 
-          Rails.logger.info "Read class name: #{component_classname} ; constantized: #{
-            component_classname.safe_constantize.inspect} ; source: #{component_filepath}"
+          Rails.logger.info "Successfully loaded source: #{component_filepath}"
         rescue Exception => e
-          Rails.logger.warn %(Could not read class name: #{component_classname} ; constantized: #{
-            component_classname.safe_constantize.inspect} ; source: #{component_filepath}
+          Rails.logger.warn %(Could not read source: #{component_filepath}
             Error: #{e.inspect}")
 
           error_info = { description: "#{e.class.name}: #{e.message}", backtrace: e.backtrace }.with_indifferent_access
