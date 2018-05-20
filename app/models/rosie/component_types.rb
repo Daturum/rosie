@@ -84,7 +84,7 @@ module Rosie
         autoload_lib: {
           prompt: 'Enter library name underscored (e.g. email_settings, queue_initializer)',
           template: <<~LIB_TEMPLATE,
-            class Rosie::<%= @component.name.classify %>
+            class Rosie::<%= @component.path.split('/').map(&:camelcase).join('') %>
               # write your code here
             end
           LIB_TEMPLATE
@@ -93,15 +93,23 @@ module Rosie
           Autoload lib is a component to store generic purpose code that is autoloaded on application initialization.
           Autoload lib is loaded in context of hosting application.
           Use autoload lib to:
+          - create code libraries to prepare ViewModels for scenarios (MVVM architecture)
           - control access to json actions via augmenting Rosie::ClientController
           - define custom layouts for scenarios rendering
           - control or redefine engine routes (use with caution)
-          - create code libraries to prepare ViewModels for scenarios (MVVM architecture)
-          Do not use autoload to:
-          - Slow code (the load timeout is #{
+          Example: to put 'user/start' scenario to /new_url you can create new user/start/custom_routes component with this code
+          class Rosie::UserStartCustomRoutes
+            def self.draw routes
+              routes.match 'new_url', to: 'client#render_component_template', :role => "user", :scenario => "start", via: [:get, :post]
+            end
+            Rails.application.routes_reloader.reload!
+          end
+
+          DO NOT use autoload to:
+          - write slow code and code that calls external services (the load timeout is #{
             ComponentLoaderMiddleware.code_loading_timeout_in_seconds} seconds)
           - write complex business logic (do it in hosting application)
-          - monkey patch, configure or anyhow redefine begavior of hosting application
+          - monkey patch, configure or anyhow redefine behavior of hosting application
           - store large constants or data sets
           </pre>
           LIB_HINTS
