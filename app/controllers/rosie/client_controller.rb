@@ -1,7 +1,7 @@
 module Rosie
   class ClientController < ApplicationController
     protect_from_forgery with: :exception, except: [:get_asset_file]
-    around_action :with_handling_of_path_not_exists,          only: [:get_asset_file, :render_component_template]
+    around_action :with_handling_of_path_not_exists,          only: :render_component_template
     after_action  :inject_request_components,                 only: :render_component_template
     after_action  :inject_ajax_error_handling_for_programmer, only: :render_component_template
 
@@ -64,8 +64,7 @@ module Rosie
       begin
         yield
       rescue ActionView::MissingTemplate => error
-        raise ActionController::RoutingError.new('Not Found') if !Programmer.current
-        raise error
+        raise ActionController::RoutingError.new('Not Found')
       end
     end
   end
