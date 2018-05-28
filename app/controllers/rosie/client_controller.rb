@@ -5,7 +5,7 @@ module Rosie
     after_action  :inject_request_components,                 only: :render_component_template
     after_action  :inject_ajax_error_handling_for_programmer, only: :render_component_template
 
-    prepend_view_path Rails.root.join('app', 'interfaces')
+    prepend_view_path Rosie.interfaces_path
 
     def self.programmer_authentication_required?; false end
 

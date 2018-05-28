@@ -15,8 +15,7 @@ module Rosie
 
     def components_directory # this is thread safe
       begin
-        RequestStore["components_directory"] ||=
-          Rails.root.join('app', 'interfaces')
+        RequestStore["components_directory"] ||= Rosie.interfaces_path
       rescue # TODO: write white list of exceptions
         nil
       end
