@@ -84,7 +84,7 @@ module Rosie
       end
 
       if ('Rosie::Component'.constantize.table_exists? && !'Rosie::Component'.constantize.exists?)
-        'Rosie::ComponentTypes'.constantize.seed_db_with_first_request
+        'Rosie::ComponentTypes'.constantize.seed_db_on_first_request
       end
 
       if(component_write_files_required?)
