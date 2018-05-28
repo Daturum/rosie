@@ -1,4 +1,4 @@
-class CreateRosieComponents < ActiveRecord::Migration[5.2]
+class CreateRosieComponents < ActiveRecord::Migration
   def change
     create_table :rosie_components do |t|
       t.string :component_type

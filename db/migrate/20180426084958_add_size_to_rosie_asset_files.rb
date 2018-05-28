@@ -1,4 +1,4 @@
-class AddSizeToRosieAssetFiles < ActiveRecord::Migration[5.2]
+class AddSizeToRosieAssetFiles < ActiveRecord::Migration
   def change
     add_column :rosie_asset_files, :size, :integer
   end

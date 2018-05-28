@@ -1,4 +1,4 @@
-class CreateRosieProgrammers < ActiveRecord::Migration[5.2]
+class CreateRosieProgrammers < ActiveRecord::Migration
   def change
     create_table :rosie_programmers do |t|
       t.string :email

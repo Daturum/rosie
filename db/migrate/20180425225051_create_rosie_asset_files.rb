@@ -1,4 +1,4 @@
-class CreateRosieAssetFiles < ActiveRecord::Migration[5.2]
+class CreateRosieAssetFiles < ActiveRecord::Migration
   def change
     create_table :rosie_asset_files do |t|
       t.string :filename
