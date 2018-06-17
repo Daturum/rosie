@@ -13,18 +13,14 @@ module Rosie
       RequestStore["ComponentLoaderMiddleware.current"] = value
     end
 
-    def components_directory # this is thread safe
-      begin
-        RequestStore["components_directory"] ||=
-          Rails.root.join('app', 'interfaces')
-      rescue # TODO: write white list of exceptions
-        nil
-      end
+    def components_directory
+      RequestStore["components_directory"] ||=
+        Rails.root.join('app', 'interfaces')
     end
 
     def component_write_files_required?
       return false unless 'Rosie::Component'.safe_constantize.try :table_exists?
-      Rails.logger.info "Checking WRITE_required:\ncomponents_directory #{components_directory}\nDir.exists?(components_directory) #{Dir.exists?(components_directory)}\nFile.mtime(components_directory).to_i: #{File.mtime(components_directory).to_i}\n'Rosie::Programmer'.constantize.last_action_timestamp.to_i: #{'Rosie::Programmer'.constantize.last_action_timestamp.to_i}\nThread.current.object_id: #{Thread.current.object_id}"
+      Rails.logger.info "Checking WRITE_required:\ncomponents_directory #{components_directory}\nDir.exists?(components_directory) #{Dir.exists?(components_directory)}\nFile.mtime(components_directory).to_i: #{File.mtime(components_directory).to_i rescue nil}\n'Rosie::Programmer'.constantize.last_action_timestamp.to_i: #{'Rosie::Programmer'.constantize.last_action_timestamp.to_i}\nThread.current.object_id: #{Thread.current.object_id}"
       components_directory &&                                                  # if components and programmers exist in database
         (!Dir.exists?(components_directory) ||                                   # if these components aren't written to files
         (File.mtime(components_directory).to_i != 'Rosie::Programmer'.constantize.last_action_timestamp.to_i))    # or current loaded version is obsolete
