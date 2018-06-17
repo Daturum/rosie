@@ -16,3 +16,7 @@ gemspec
 
 # rosemary is build with and tested with puma
 gem 'puma'
+
+# adding as development dependency because xlsx is often used
+# for configuration storage
+gem 'creek'
