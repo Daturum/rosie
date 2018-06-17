@@ -27,7 +27,7 @@ module Rosie
     end
 
     def initialization_required?
-      Rails.logger.info "Checking INITIALIZATION_required:\n@@urrently_loaded_components_directory_mtime: #{@@currently_loaded_components_directory_mtime}\nFile.mtime(components_directory).to_i: #{File.mtime(components_directory).to_i}\nThread.current.object_id: #{Thread.current.object_id}"
+      Rails.logger.info "Checking INITIALIZATION_required:\n@@urrently_loaded_components_directory_mtime: #{@@currently_loaded_components_directory_mtime}\nFile.mtime(components_directory).to_i: #{File.mtime(components_directory).to_i  rescue nil}\nThread.current.object_id: #{Thread.current.object_id}"
       component_write_files_required? ||
         (@@currently_loaded_components_directory_mtime != File.mtime(components_directory).to_i)
     end
