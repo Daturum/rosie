@@ -227,17 +227,34 @@ window.deleteLinkClicked = function(link)
   }
 }
 
-// Track line numbers and set cursor
+
+// Track line numbers
 editor.on('cursorActivity', function(cm) {
   window.location.hash = ((parseInt(cm.getCursor()['line']) || 0) + 1) +
     ":" + ((parseInt(cm.getCursor()['ch']) || 0) + 1);
 }) ;
-if(window.location.hash.indexOf(':') > -1)
+
+// Set cursor. reload tab if opened first time (strange bug in codemirror - it sets cursor as expected only on
+// the second load of the page, otherwise the cursor is misplaced)
+var reload_cookie_name = 'reload_cookie_'+window.location.pathname+window.location.search;
+if(!Cookies.get(reload_cookie_name))
 {
-  var pos = window.location.hash.substr(1).split(':');
-  editor.setCursor(0, 0);
-  setTimeout(function(){ editor.setCursor(pos[0]-1, pos[1]-1); }, 200);
-  editor.replaceSelection(' '); editor.undo(); // workaround to "floating" cursor position bug
+  Cookies.set(reload_cookie_name, 'true', {
+    expires: new Date(new Date().getTime() + 1 * 5000),
+    path: '' });
+  $('body').hide();
+  window.location.reload();
+} else {
+  Cookies.remove(reload_cookie_name);
+  if(window.location.hash.indexOf(':') > -1)
+  {
+    setTimeout(function(){
+      var pos = window.location.hash.substr(1).split(':');
+      editor.setCursor(0, 0);
+      editor.replaceSelection(' '); editor.undo(); // workaround to "floating" cursor position bug
+      editor.setCursor(pos[0]-1, pos[1]-1);
+    }, 200);
+  }
 }
 
 // Setting timeout for for 10 minutes OR Locking editor; Unlocking on beforeunload
