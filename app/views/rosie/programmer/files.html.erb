@@ -1,7 +1,7 @@
 <% # HTML %>
 <% cache "asset_files_index #{Rosie::AssetFile.cache_invalidation_key}" do %>
 
-  <% Rosie::AssetFile.order('updated_at').all.each do |file| %>
+  <% Rosie::AssetFile.order('updated_at').select(Rosie::AssetFile.column_names - ['file_contents']).each do |file| %>
     <%= link_to file.filename, asset_file_path(file.filename) %>&nbsp;<a href="#" title="Delete this file" class="delete">×</a>
     <span style="color:gray">
       <% if file.autoreplace_filepaths %><span title="Autoreplace filepaths">*</span><% end %>
