@@ -150,14 +150,21 @@ module Rosie
         # saving file
         params[:files].each do |file|
           # try to get the directory name from headers and add it to filename
-          file.original_filename = file.headers.match(
-            /[=:\"]([^=:\"]*#{file.original_filename})/).captures[0] rescue Rails.logger.info(
-              "Could not get original filename with directory for #{file.headers}")
+          file.original_filename = URI::decode(file.headers.scan(/filename="([^"]+)"/)[0][0]) rescue Rails.logger.info(
+            "Could not get original filename with directory for #{file.headers}")
 
           # ignore outer directory if needed
           if params[:remove_outer_directory_from_filepath] && file.original_filename.include?('/')
             segments = file.original_filename.split('/')
             file.original_filename = segments[1..-1].join('/')
+          end
+
+          # prepend paths
+          if params[:prepend_path].present?
+            prepended_path = params[:prepend_path]
+            prepended_path = prepended_path[1..-1] if prepended_path[0]=='/'
+            prepended_path = prepended_path+'/' if prepended_path[-1] != '/'
+            file.original_filename = "#{prepended_path}#{file.original_filename}"
           end
 
           # autoreplace filepaths in css and js files

@@ -2,7 +2,7 @@
 <% cache "asset_files_index #{Rosie::AssetFile.cache_invalidation_key}" do %>
 
   <% Rosie::AssetFile.order('updated_at').all.each do |file| %>
-    <%= link_to file.filename, asset_file_path(file.filename) %>&nbsp;<a href="#" class="delete">×</a>
+    <%= link_to file.filename, asset_file_path(file.filename) %>&nbsp;<a href="#" title="Delete this file" class="delete">×</a>
     <span style="color:gray">
       <% if file.autoreplace_filepaths %><span title="Autoreplace filepaths">*</span><% end %>
       <%= number_to_human_size file.size %>,
@@ -15,15 +15,21 @@
 
 <% end %>
 <%= form_tag("?", multipart: true, method: "post") do %>
-  <br/>Upload new files<br/>
+  <br/><b>Upload new files</b><br/>
   <%= check_box_tag('rewrite') %><%= label_tag 'rewrite' do %>Rewrite files with same names<% end %><br/>
   <%= check_box_tag('remove_outer_directory_from_filepath') %><%=
     label_tag 'remove_outer_directory_from_filepath' do %>Remove outer directory from filepath<% end %><br/>
   <%= check_box_tag('autoreplace_filepaths_in_css_and_js_files') %><%=
     label_tag 'autoreplace_filepaths_in_css_and_js_files' do %>Autoreplace filepaths in css and js files<% end %><br/>
-
+  Prepend this path to uploaded files <input type="text" name="prepend_path" placeholder="prepend path"></input>
+  <br/><br/>
+  Upload directory
   <input name="files[]" type="file" multiple="multiple" webkitdirectory mozdirectory
-    onchange="$(this).hide().parent().submit();"></input>
+    onchange="$('input[type=file]').hide().parent().submit();"></input>
+  <br/><br/>
+  or upload selected files
+  <input name="files[]" type="file" multiple="multiple"
+    onchange="$('input[type=file]').hide().parent().submit();"></input>
 <% end %>
 
 <% # JS %>
