@@ -4,6 +4,9 @@ module Rosie
     validates :filename, uniqueness: { message: "file exists: %{value}"}, presence: true
     validates :size, :numericality => { less_than: 10.megabytes }
 
+    #prevent autoloading binary contents by default
+    default_scope { select(column_names - ['file_contents']) }
+
     # CLASS METHODS
 
     def self.cache_invalidation_key
@@ -11,12 +14,12 @@ module Rosie
         #average('extract(epoch from updated_at)').to_s
     end
 
-    def self.get_file_by_hashed_path hashed_path
+    def self.get_file_by_hashed_path_with_contents hashed_path
       segments = hashed_path.split('/')
       hash, last_segment = segments[-1].split("__", 2)
       segments[-1] = last_segment
       filename = segments.join('/')
-      @file = find_by(filename: filename)
+      @file = where(filename: filename).select('*').first
       @file.cache_hash == hash ? @file : nil
     end
 

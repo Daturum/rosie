@@ -18,7 +18,7 @@ module Rosie
 
     def get_asset_file
       params[:hashed_path] += '.' + params[:format] if params.has_key? :format
-      @file = AssetFile.get_file_by_hashed_path(params[:hashed_path])
+      @file = AssetFile.get_file_by_hashed_path_with_contents(params[:hashed_path])
       raise ActionController::RoutingError.new('Not Found') unless @file
       expires_in 1.year, :public => true
       contents = @file.file_contents
