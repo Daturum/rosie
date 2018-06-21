@@ -9,6 +9,7 @@ PATH
       memory_profiler
       paper_trail
       pg
+      pony
       rack-cache
       rack-mini-profiler
       rails (~> 5.2.0)
@@ -63,7 +64,7 @@ GEM
     addressable (2.5.2)
       public_suffix (>= 2.0.2, < 4.0)
     arel (9.0.0)
-    bcrypt (3.1.11)
+    bcrypt (3.1.12)
     bindex (0.5.0)
     builder (3.2.3)
     concurrent-ruby (1.0.5)
@@ -110,14 +111,18 @@ GEM
     nio4r (2.3.1)
     nokogiri (1.8.2)
       mini_portile2 (~> 2.3.0)
-    paper_trail (9.0.1)
+    paper_trail (9.2.0)
       activerecord (>= 4.2, < 5.3)
+      paper_trail-association_tracking (< 2)
       request_store (~> 1.1)
+    paper_trail-association_tracking (1.0.0)
     pg (1.0.0)
+    pony (1.12)
+      mail (>= 2.0)
     public_suffix (3.0.2)
     puma (3.11.4)
     rack (2.0.5)
-    rack-cache (1.7.2)
+    rack-cache (1.8.0)
       rack (>= 0.4)
     rack-mini-profiler (1.0.0)
       rack (>= 1.2.0)
@@ -151,7 +156,7 @@ GEM
     request_store (1.4.1)
       rack (>= 1.4)
     rubyzip (1.2.1)
-    sprockets (3.7.1)
+    sprockets (3.7.2)
       concurrent-ruby (~> 1.0)
       rack (> 1, < 3)
     sprockets-rails (3.2.1)

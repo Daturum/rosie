@@ -43,4 +43,7 @@ Gem::Specification.new do |s|
   # Add rack-cache for asset_files
   s.add_dependency 'rack-cache'
 
+  # Pony gem for convenient sending emails
+  s.add_dependency 'pony'
+
 end
