@@ -118,7 +118,7 @@
 </table>
 
 <% # JS %>
-<script>
+<script type="text/javascript">
 window.name = "component_edit";
 document.title = '<%= @component.path %> - ' + document.title;
 
@@ -166,7 +166,8 @@ window.context_select_changed = function(){
     window.location = '?' +  qs.build();
   }
 }
-
+</script>
+<script type="text/javascript">
 // AJAX Save and Create
 $(document).keydown(function (e) {
   if ((e.metaKey || e.ctrlKey) && e.keyCode == 83) {
@@ -205,6 +206,8 @@ function saveComponent() {
     });
 }
 
+</script>
+<script type="text/javascript">
 // side menu highlight
 $('.side.menu div[component_path="'+QueryString()['path']+'"] a.edit_link').addClass('selected');
 
@@ -213,6 +216,8 @@ if(QueryString()['diff_with'])
     return QueryString(this.search)['diff_with'] == QueryString()['diff_with']; }).each(
       function(){ $(this).addClass('selected').prev().addClass('selected'); });
 
+</script>
+<script type="text/javascript">
 // AJAX Delete
 window.deleteLinkClicked = function(link)
 {
@@ -228,6 +233,8 @@ window.deleteLinkClicked = function(link)
 }
 
 
+</script>
+<script type="text/javascript">
 // Track line numbers
 editor.on('cursorActivity', function(cm) {
   window.location.hash = ((parseInt(cm.getCursor()['line']) || 0) + 1) +
@@ -257,6 +264,8 @@ if(!Cookies.get(reload_cookie_name))
   }
 }
 
+</script>
+<script type="text/javascript">
 // Setting timeout for for 10 minutes OR Locking editor; Unlocking on beforeunload
 window.setOrResetLockTimeout = function(){
   if(window.__lockTimeout) clearTimeout(window.__lockTimeout);
@@ -272,6 +281,8 @@ if(checkLockIsFree())
   editor.getWrapperElement().style.background = '#eee';
 }
 
+</script>
+<script type="text/javascript">
 // Protect from accidentally closing tab with work in progress
 
 $(window).on('beforeunload', function(){
@@ -286,6 +297,8 @@ editor.on('change', function(cm) {
   $(cm.getWrapperElement()).attr('changed', 'changed');
 }) ;
 
+</script>
+<script type="text/javascript">
 // Toggle visibility of subcomponents
 window.toggle_dependent_components = function(element){
   var component_path = $(element).closest('div[component_path]').attr('component_path')
@@ -314,6 +327,8 @@ $('span.toggle_components').each(function(){
   window.update_component_state(component_path);
 });
 
+</script>
+<script type="text/javascript">
 // ShowDiff if diff_with provided
 if($('#diff_version_body').size() > 0)
 {
