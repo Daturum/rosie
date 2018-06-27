@@ -13,11 +13,32 @@
 <table class="components_table">
   <tr>
     <td class="side menu">
-      <% Rosie::Component.order(:path).each do |c| %>
+      <%
+          @component_prefixes = {
+            'autoload_lib' => '_lib:', 'partial' => '_part:'
+            }
+          def component_path_with_prefix c
+            prefix = @component_prefixes[c.component_type] || ''
+            parents = c.context == 'root' ? '' :  (c.context + '/') #
+            link_text = parents + prefix + c.name
+            return link_text
+          end
+          components_texts = {}
+          Rosie::Component.all.each{ |c| components_texts[component_path_with_prefix(c)] = c}
+          components_ordered = components_texts.sort_by{|path_with_prefix, c| path_with_prefix}
+
+          def component_link_text c
+            text = component_path_with_prefix(c).gsub(/[^\/]+\//, '&mdash;&nbsp;')
+            if prefix = @component_prefixes[c.component_type]
+              text.gsub!(prefix, prefix.gsub('_',''))
+            end
+            return text.html_safe
+          end
+          %>
+      <% components_ordered.each do |entry| c = entry[1]  %>
         <div component_path="<%= c.path %>">
           <% # this is link to the component %>
-          <%= link_to c.path.gsub(/[^\/]+\//, '&mdash;&nbsp;').html_safe,
-            {path: c.path}, class: 'edit_link'
+          <%= link_to component_link_text(c), {path: c.path}, class: 'edit_link'
 
           # this is span to show whether the component is locked by other programmer
           %><% if c.get_locking_programmer
@@ -36,7 +57,7 @@
 
             <% # this is span to open scenario in a new tab %>
             <% if c.component_type.in? %w'scenario' %>
-              <%= link_to '&#9657;'.html_safe, component_path(role: c.base_context, scenario: c.name), target: :blank, class: "secondary",
+              <%= link_to '&#9657;'.html_safe, component_path(role: c.root_context, scenario: c.name), target: :blank, class: "secondary",
                     title: 'Open this scenario in new page' %>
             <% end %>
 

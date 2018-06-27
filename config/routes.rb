@@ -16,29 +16,39 @@ Rosie::Engine.routes.draw do
   # User area
   get  'files/(*hashed_path)', to: 'client#get_asset_file'
 
-  if Rosie::Component.table_exists?
-    Rosie::Component.where("path LIKE ?", "%/custom_routes").each do |c|
-      Rails.logger.info "Loading routes from #{c.path}"
-      route_class = "Rosie::#{c.path.split('/').map(&:camelcase).join('')}".safe_constantize
-      if !route_class
-        Rails.logger.info "Could not load class from #{c.path}"
-      else
-        begin
-          route_class.draw self
-        rescue => e
-          Rails.logger.info "Could not load routes from class #{c.path}:\n#{e.backtrace.join("\n")}"
+  begin
+
+    if Rosie::Component.table_exists?
+
+      #Drawing custom routes
+      Rosie::Component.where("path LIKE ?", "%/custom_routes").each do |c|
+        Rails.logger.info "Loading routes from #{c.path}"
+        route_class = "Rosie::#{c.path.split('/').map(&:camelcase).join('')}".safe_constantize
+        if !route_class
+          Rails.logger.info "Could not load class from #{c.path}"
+        else
+          begin
+            route_class.draw self
+          rescue => e
+            Rails.logger.info "Could not load routes from class #{c.path}: #{e.message}\n#{e.backtrace.join("\n")}"
+          end
         end
       end
-    end
-  end
 
-  begin
+      #Drawing user#<scenario> routes
+      Rosie::Component.where(component_type: 'scenario').where("path LIKE ?", "user/%").each do |c|
+        next if c.name == 'start'
+        Rails.logger.info "Drawing user root route #{c.path}"
+        match "/#{c.name}", to: 'client#render_component_template', via: [:get, :post], role: "user", scenario: c.name
+      end
+    end
+
     match '/', to: 'client#render_component_template', via: [:get, :post], role: "user", scenario: "start"
     match '/(:role(/:scenario(/:json_action)))', to: 'client#render_component_template',
-      as: :render_component_template, via: [:get, :post],
+        via: [:get, :post],
         :defaults => { :role => "user", :scenario => "start" }
   rescue => e
-    Rails.logger.info "Could not load client routes:\n#{e.backtrace.join("\n")}"
+    Rails.logger.info "Could not load client routes: #{e.message}\n#{e.backtrace.join("\n")}"
   end
 
 end

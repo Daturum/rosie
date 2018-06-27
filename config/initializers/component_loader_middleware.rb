@@ -27,9 +27,9 @@ module Rosie
     end
 
     def initialization_required?
-      Rails.logger.info "Checking INITIALIZATION_required:\n@@urrently_loaded_components_directory_mtime: #{@@currently_loaded_components_directory_mtime}\nFile.mtime(components_directory).to_i: #{File.mtime(components_directory).to_i  rescue nil}\nThread.current.object_id: #{Thread.current.object_id}"
+      Rails.logger.info "Checking INITIALIZATION_required:\n@@currently_loaded_components_directory_mtime: #{@@currently_loaded_components_directory_mtime}\nFile.mtime(components_directory).to_i: #{File.mtime(components_directory).to_i  rescue nil}\nThread.current.object_id: #{Thread.current.object_id}"
       component_write_files_required? ||
-        (@@currently_loaded_components_directory_mtime != File.mtime(components_directory).to_i)
+        (Dir.exists?(components_directory) && (@@currently_loaded_components_directory_mtime != File.mtime(components_directory).to_i))
     end
 
     def call env
@@ -133,6 +133,7 @@ module Rosie
           component_loaded = true
           component.update_attribute(:loading_error, nil)
           component.loading_error = nil
+          ActiveRecord::Base.connection.schema_cache.clear!
 
           Rails.logger.info "Successfully loaded source: #{component_filepath}"
         rescue Exception => e
@@ -143,6 +144,9 @@ module Rosie
           component.update_attribute(:loading_error, error_info)
           component.loading_error = error_info
         end
+      end
+      if component.component_type.in?(%w[scenario])
+        Rails.application.reload_routes!
       end
     end
   end

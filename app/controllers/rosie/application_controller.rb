@@ -30,14 +30,18 @@ module Rosie
          path: component_path
     end
 
-    def component_path(*args, &block)
-      result = render_component_template_path *args, &block
+    def component_path(params = {})
+      params[:controller] = 'client'
+      params[:action] = 'render_component_template'
+      params[:only_path] = true unless params.has_key?(:only_path)
+
+      result = url_for params
       result = '/' if result == ''
       result
     end
 
-    def component_url(*args, &block)
-      render_component_template_url *args, &block
+    def component_url(params = {})
+      component_path(params.merge(only_path: false))
     end
 
     def with_cookie_timezone

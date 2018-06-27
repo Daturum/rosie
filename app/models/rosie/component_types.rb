@@ -3,11 +3,11 @@ module Rosie
     def self.types
       @@component_types ||= {
         role:         {formats: 'text', handlers: %w[raw],           context_types: %w[root],         occurence: 'multiple' },
+        autoload_lib: {formats: 'text', handlers: %w[ruby],          context_types: %w[role],         occurence: 'multiple' },
         layout:       {formats: 'html', handlers: %w[erb],           context_types: %w[role],         occurence: 'single' },
         scenario:     {formats: 'html', handlers: %w[erb slim],      context_types: %w[role],         occurence: 'multiple' },
         partial:      {formats: 'html', handlers: %w[erb slim],      context_types: %w[layout scenario], occurence: 'multiple' },
-        json_action:  {formats: 'json', handlers: %w[erb],           context_types: %w[scenario],     occurence: 'multiple' },
-        autoload_lib: {formats: 'text', handlers: %w[ruby],          context_types: %w[layout scenario], occurence: 'multiple' },
+        json_action:  {formats: 'json', handlers: %w[erb],           context_types: %w[scenario],     occurence: 'multiple' }
       }.with_indifferent_access.freeze
     end
 
@@ -29,7 +29,7 @@ module Rosie
           template:  <<~LAYOUT_TEMPLATE
             <html>
               <head>
-                <title>Hello, <%= @component.base_context.humanize %>!</title>
+                <title>Hello, <%= @component.root_context.humanize %>!</title>
                 <%%= csrf_meta_tags %>
                 <%%= stylesheet_link_tag    'rosie/application', media: 'all', 'data-turbolinks-track': 'reload'  %>
                 <%%= javascript_include_tag 'rosie/application_jquery', 'data-turbolinks-track': 'reload'  %>
@@ -44,11 +44,11 @@ module Rosie
           prompt: 'Enter scenario name underscored (e.g. manage_blog_posts, check_user_reports)',
           hints: <<~SCENARIO_HINTS,
             Run this scenario: <%= link_to @component.path,
-            component_path(role: @component.base_context, scenario: @component.name), target: :_blank %><br>
+            component_path(role: @component.root_context, scenario: @component.name), target: :_blank %><br>
             #{autoreplace_filepaths_link}
           SCENARIO_HINTS
           template: <<~SCENARIO_TEMPLATE
-            <h1>Start scenario</h1>
+            <h1><%= @component.name.humanize%> scenario</h1>
             <%%= link_to "What's the time?", url_for(json_action: :get_current_time, some_param: 'some_val'),
             	id: "get_time_link", method: 'POST', remote: true, data:{type: :json, disable_with: 'Please wait...'} %>
             <script>
@@ -76,7 +76,7 @@ module Rosie
           hints: <<~ACTION_HINTS
           These JSON actions are called by POST http method.
           <%= link_to 'Test in new window', component_path(
-            role: @component.base_context, scenario: @component.parent,
+            role: @component.root_context, scenario: @component.parent,
             json_action: @component.name, format: @component.format),
             target: "c\#{@component.try :id}", method: :post %><br/>
           ACTION_HINTS
@@ -97,8 +97,8 @@ module Rosie
           - control access to json actions via augmenting Rosie::ClientController
           - define custom layouts for scenarios rendering
           - control or redefine engine routes (use with caution)
-          Example: to put 'user/start' scenario to /new_url you can create new user/start/custom_routes component with this code
-          class Rosie::UserStartCustomRoutes
+          Example: to put 'user/start' scenario to /new_url you can create new user/custom_routes component with this code
+          class Rosie::UserCustomRoutes
             def self.draw routes
               routes.match 'new_url', to: 'client#render_component_template', :role => "user", :scenario => "start", via: [:get, :post]
             end

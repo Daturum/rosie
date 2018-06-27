@@ -93,7 +93,7 @@ module Rosie
     def parent
       context.split('/')[-1]
     end
-    def base_context
+    def root_context
       path.split('/', 2)[0] if path
     end
     def occurence

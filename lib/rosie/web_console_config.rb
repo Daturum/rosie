@@ -10,7 +10,7 @@ WebConsole::Request.class_eval do
   def from_whitelisted_ip?;
     programmer_authenticated = ActionController::HttpAuthentication::Basic.authenticate self do |email, pw|
       Rosie::Programmer.login(email, pw) end
-    return (programmer_authenticated && ssl?) || (local? && (Rails.env == 'development'))
+    return programmer_authenticated && (ssl? || local?)
   end
 end
 
