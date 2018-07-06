@@ -92,7 +92,7 @@ module Rosie
 
 
       # loading components
-      'Rosie::Component'.constantize.all.each do |component| load_or_reload component end
+      load_or_reload_all_components
 
       ### Adding component Views to application viewpaths
       ### 'Rosie::ClientController'.constantize.reset_and_prepend_component_path(components_directory)
@@ -101,6 +101,8 @@ module Rosie
       FileUtils.touch components_directory, :mtime => Rosie::Programmer.last_action_timestamp
 
       'Rosie::ClientController'.constantize.view_paths.each{|view_path| view_path.try :clear_cache}
+      ActiveRecord::Base.connection.schema_cache.clear!
+      Rails.application.reload_routes!
     end
 
     def filepath component
@@ -117,23 +119,46 @@ module Rosie
         sub(/\.ruby$/,'.rb').sub('.text.','.') #sub('.json.','.').
     end
 
-    def load_or_reload component
+    def load_or_reload_all_components
+      'Rosie::Component'.constantize.all.each{ |c|
+        try_remove_defined_constants c}.each{ |c|
+        write_component_to_file c}.each {|c|
+        load_or_reload c }
+    end
+
+    def try_remove_defined_constants component
+      component_filepath = filepath(component)
+      if component.component_type.in?(%w[autoload_lib])
+        klass_name = component.path.split('/').map(&:camelcase).join('')
+        "Rosie".safe_constantize.try(:send, :remove_const, klass_name) rescue nil
+      end
+    end
+
+    def write_component_to_file component
       component_filepath = filepath(component)
       Rails.logger.info "Loading/reloading #{component.path} (#{component_filepath})"
 
       FileUtils.mkdir_p(File.dirname component_filepath)
       File.write(component_filepath, component.body)
+    end
+
+    def load_or_reload component
+      component_filepath = filepath(component)
       if component.component_type.in?(%w[autoload_lib])
         Rails.logger.info("Initializing component #{component.path}")
         begin
           Timeout::timeout(self.class.code_loading_timeout_in_seconds) {
             Kernel.load(component_filepath)
-          } rescue raise("Timeout loading #{component_filepath}")
+          }
+
+          autolib_class_name = "Rosie::#{component.path.split('/').map(&:camelcase).join('')}"
+          unless autolib_class_name.safe_constantize
+            raise "Component `#{component.path}' must define constant `#{autolib_class_name}'"
+          end
 
           component_loaded = true
           component.update_attribute(:loading_error, nil)
           component.loading_error = nil
-          ActiveRecord::Base.connection.schema_cache.clear!
 
           Rails.logger.info "Successfully loaded source: #{component_filepath}"
         rescue Exception => e
@@ -145,10 +170,8 @@ module Rosie
           component.loading_error = error_info
         end
       end
-      if component.component_type.in?(%w[scenario])
-        Rails.application.reload_routes!
-      end
     end
+
   end
 end
 

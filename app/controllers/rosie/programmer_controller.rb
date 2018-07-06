@@ -113,7 +113,9 @@ module Rosie
 
         @component.delete_recent_versions_of_current_programmer_except_latest
 
-        ComponentLoaderMiddleware.current.load_or_reload @component
+        ComponentLoaderMiddleware.current.load_or_reload_all_components
+
+        @component.reload
 
         if(original_path != @component.path)
           render js: "window.location = '?path=#{@component.path}'"
