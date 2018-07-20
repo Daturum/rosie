@@ -4,7 +4,7 @@ require 'jquery-rails'
 
 module Rosie
   class Engine < ::Rails::Engine
-    isolate_namespace Rosiz
+    isolate_namespace Rosie
 
     Rosie.singleton_class.instance_eval do
       define_method(:table_name_prefix) { "rosie.rosie_" }
