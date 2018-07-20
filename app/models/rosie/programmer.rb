@@ -1,5 +1,5 @@
 module Rosie
-  class Programmer < ApplicationRecord
+  class Programmer < Rosie::ApplicationRecord
     has_paper_trail ignore: [:updated_at]
     has_secure_password
     validates :email, format: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i, uniqueness: true

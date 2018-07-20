@@ -1,5 +1,5 @@
 module Rosie
-  class AssetFile < ApplicationRecord
+  class AssetFile < Rosie::ApplicationRecord
     has_paper_trail ignore: [:file_contents]
     validates :filename, uniqueness: { message: "file exists: %{value}"}, presence: true
     validates :size, :numericality => { less_than: 10.megabytes }

@@ -1,5 +1,5 @@
 module Rosie
-  class Component < ApplicationRecord
+  class Component < Rosie::ApplicationRecord
     has_paper_trail ignore: [:updated_at, :editing_locked_by, :loading_error]
     validates :path,            uniqueness: true, presence: true
     # validates :partial,         inclusion: { in: [ true, false ] }
