@@ -19,7 +19,6 @@ module Rosie
     end
 
     def component_write_files_required?
-      return false if Rails.env.production?
       return false unless 'Rosie::Component'.safe_constantize.try :table_exists?
       Rails.logger.info "Checking WRITE_required:\ncomponents_directory #{components_directory}\nDir.exists?(components_directory) #{Dir.exists?(components_directory)}\nFile.mtime(components_directory).to_i: #{File.mtime(components_directory).to_i rescue nil}\n'Rosie::Programmer'.constantize.last_action_timestamp.to_i: #{'Rosie::Programmer'.constantize.last_action_timestamp.to_i}\nThread.current.object_id: #{Thread.current.object_id}"
       components_directory &&                                                  # if components and programmers exist in database
