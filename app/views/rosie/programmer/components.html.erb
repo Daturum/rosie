@@ -2,7 +2,8 @@
 <style>
   table.components_table { width: 100%; }
   table.components_table td { vertical-align: top; }
-  table.components_table td.menu { width: 200px; }
+  table.components_table td.menu { min-width: 200px; }
+  table.components_table td.side.menu>div {clear: both;}
   a.secondary, span.secondary { text-decoration: none; color: #ddd; cursor: pointer; }
   a.secondary::before, span.secondary::before { content: '\2003'; }
   a.secondary:hover, span.secondary:hover { color: gray; }
@@ -141,7 +142,7 @@
 <% # JS %>
 <script type="text/javascript">
 window.name = "component_edit";
-document.title = '<%= @component.path %> - ' + document.title;
+document.title = '<%= @component.path.split('/').reverse.join(' - ') %> - ' + document.title;
 
 var format = $('#format').val(),
   handler = $('#handler').val(),
