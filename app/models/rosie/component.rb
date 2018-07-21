@@ -107,8 +107,8 @@ module Rosie
       available_contexts = self.class.where(component_type: context_types)
       if self.class.component_types[component_type][:occurence] == 'single'
         available_contexts = available_contexts.where( # TODO remove pg_dependency
-          "NOT EXISTS (SELECT 1 FROM rosie_components c WHERE c.component_type = ?
-          AND c.path ILIKE CONCAT(rosie_components.path, '/%'))",
+          "NOT EXISTS (SELECT 1 FROM rosie.rosie_components c WHERE c.component_type = ?
+          AND c.path ILIKE CONCAT(rosie.rosie_components.path, '/%'))",
           component_type)
       end
       result = available_contexts.pluck(:path)
