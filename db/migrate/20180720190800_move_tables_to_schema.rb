@@ -12,7 +12,7 @@ class MoveTablesToSchema < ActiveRecord::Migration[5.2]
       t.integer  :item_id,   null: false
       t.string   :event,     null: false
       t.string   :whodunnit
-      t.jsonb     :object
+      t.text     :object
 
       # Known issue in MySQL: fractional second precision
       # -------------------------------------------------
@@ -32,7 +32,7 @@ class MoveTablesToSchema < ActiveRecord::Migration[5.2]
 
     sql = <<-SQL
 INSERT INTO "rosie"."versions"(item_type, item_id, event, whodunnit, object, created_at)
-  SELECT item_type, item_id, event, whodunnit, object::jsonb, created_at FROM "public"."versions" 
+  SELECT item_type, item_id, event, whodunnit, object, created_at FROM "public"."versions"
   WHERE item_type ILIKE 'Rosie::%'
     SQL
     execute(sql)
