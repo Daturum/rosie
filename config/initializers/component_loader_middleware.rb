@@ -39,7 +39,7 @@ module Rosie
     def threadsafe_call env
       self.class.current = self
       check_and_initialize_rails_components_if_needed
-      @@currently_loaded_components_directory_mtime = File.mtime(components_directory).to_i
+      @@currently_loaded_components_directory_mtime = (File.mtime(components_directory).to_i rescue DateTime.now.to_i)
       result = @app.call(env)
       self.class.current = nil
       return result
