@@ -17,6 +17,7 @@ pickle-email-*.html
 /test/dummy/app/interfaces
 .DS_Store
 test/dummy/config/secrets.yml
+test/dummy/db/schema.rb
 
 # TODO Comment out this rule if you are OK with secrets being uploaded to the repo
 config/initializers/secret_token.rb
