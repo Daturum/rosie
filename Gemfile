@@ -20,3 +20,11 @@ gem 'puma'
 # adding as development dependency because xlsx is often used
 # for configuration storage
 gem 'creek'
+
+# get gems from enviroment variable (useful for Heroku deploys)
+envgems = ENV['ENV_GEMS']
+if envgems
+  envgems.split(';').each do |gem_string|
+    eval gem_string
+  end
+end
