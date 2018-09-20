@@ -21,8 +21,8 @@ gem 'puma'
 # for configuration storage
 gem 'creek'
 
-# get gems from enviroment variable (useful for Heroku deploys)
-envgems = ENV['ENV_GEMS']
+# TODO: Remove and make this a new branch
+envgems = %(gem 'kmeans-clusterer';gem 'gnuplot')
 if envgems
   envgems.split(';').each do |gem_string|
     eval gem_string
