@@ -46,4 +46,6 @@ Gem::Specification.new do |s|
   # Pony gem for convenient sending emails
   s.add_dependency 'pony'
 
+  s.add_dependency 'geokit-rails'
+
 end
