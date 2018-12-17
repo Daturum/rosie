@@ -21,6 +21,8 @@ gem 'puma'
 # for configuration storage
 gem 'creek'
 
+gem 'geokit-rails'
+
 # TODO: Remove and make this a new branch
 envgems = %(gem 'kmeans-clusterer';gem 'gnuplot')
 if envgems

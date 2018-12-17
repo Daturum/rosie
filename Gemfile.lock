@@ -192,6 +192,7 @@ PLATFORMS
 
 DEPENDENCIES
   creek
+  geokit-rails
   gnuplot
   kmeans-clusterer
   puma
