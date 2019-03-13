@@ -7,7 +7,7 @@ RUN apk add --no-cache git openssh-client \
                        gcc \
                        yaml-dev \
                        glib-dev libc-dev make g++ \
-                       postgresql-dev=10.5-r0 postgresql-client=10.5-r0 \
+                       postgresql-dev postgresql-client \
                        libxslt-dev zlib-dev \
                        tzdata
                        
