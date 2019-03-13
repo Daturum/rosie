@@ -18,7 +18,6 @@ environment ENV.fetch("RAILS_ENV") { "development" }
 
 __puma_workers = ENV.fetch("WEB_CONCURRENCY"){1}.to_i
 
-if __puma_workers > 1
 # Specifies the number of `workers` to boot in clustered mode.
 # Workers are forked webserver processes. If using threads and workers together
 # the concurrency of the application would be max `threads` * `workers`.
