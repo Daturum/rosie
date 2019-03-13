@@ -9,7 +9,8 @@ RUN apk add --no-cache git openssh-client \
                        glib-dev libc-dev make g++ \
                        postgresql-dev=10.5-r0 postgresql-client=10.5-r0 \
                        libxslt-dev zlib-dev \
-                       tzdata
+                       tzdata \
+                       zip
                        
 ENV RAILS_ENV production
 ENV RAILS_SERVE_STATIC_FILES true
