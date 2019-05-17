@@ -47,5 +47,6 @@ Gem::Specification.new do |s|
   s.add_dependency 'pony'
 
   s.add_dependency 'geokit-rails'
-
+  
+  s.add_dependency 'geocoder'
 end
