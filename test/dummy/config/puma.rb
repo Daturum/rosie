@@ -33,7 +33,11 @@ workers __puma_workers if __puma_workers > 1
 # process behavior so workers use less memory.
 #
 # preload_app!
-preload_app! if __puma_workers > 1
+__disable_preload_app = ENV.fetch("DISABLE_PRELOAD_APP"){'false'}
+__disable_preload_app = __disable_preload_app == 'true'
+unless __disable_preload_app
+  preload_app! if __puma_workers > 1
+end
 
 # Allow puma to be restarted by `rails restart` command.
 plugin :tmp_restart
