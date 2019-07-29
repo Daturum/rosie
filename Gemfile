@@ -23,6 +23,8 @@ gem 'creek'
 
 gem 'geokit-rails'
 
+gem 'numbers_in_words'
+
 # TODO: Remove and make this a new branch
 envgems = %(gem 'kmeans-clusterer';gem 'gnuplot')
 if envgems
