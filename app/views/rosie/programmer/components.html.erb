@@ -167,6 +167,7 @@ window.editor = CodeMirror.fromTextArea(document.getElementById("body"), {
   matchBrackets: true
 });
 editor.getWrapperElement().style.height = 'auto';
+window.initial_body = $('#body').val();
 
 editor.focus();
 
@@ -220,7 +221,7 @@ function saveComponent() {
     success(function(result){
       eval(result);
       editor.getWrapperElement().style.background = '';
-      $(editor.getWrapperElement()).removeAttr('changed');
+      window.initial_body = $('#body').val();
     }).
     fail(function(jqXHR, textStatus, errorThrown) {
       alert(jqXHR.responseText);
@@ -259,8 +260,8 @@ window.deleteLinkClicked = function(link)
 <script type="text/javascript">
 // Track line numbers
 editor.on('cursorActivity', function(cm) {
-  window.location.hash = ((parseInt(cm.getCursor()['line']) || 0) + 1) +
-    ":" + ((parseInt(cm.getCursor()['ch']) || 0) + 1);
+  window.history.replaceState({},'', '#'+ ((parseInt(cm.getCursor()['line']) || 0) + 1) +
+    ":" + ((parseInt(cm.getCursor()['ch']) || 0) + 1));
 }) ;
 
 // Set cursor. Reload tab if opened first time (strange bug in codemirror - it sets cursor as expected only on
@@ -311,7 +312,7 @@ if(checkLockIsFree())
 // Protect from accidentally closing tab with work in progress
 
 $(window).on('beforeunload', function(){
-  if($(editor.getWrapperElement()).is('[changed]'))
+  if(window.initial_body != $('#body').val())
     return 'You have unsaved changes. Delete them?';
   if($('#locked_by').text().trim() == "")
     $.ajax({url: "?", type: "PUT", data: {unlock: $('#component_form').data('original-path')}});
@@ -319,7 +320,6 @@ $(window).on('beforeunload', function(){
 
 editor.on('change', function(cm) {
   editor.save();
-  $(cm.getWrapperElement()).attr('changed', 'changed');
 }) ;
 
 </script>

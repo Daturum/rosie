@@ -21,6 +21,7 @@
 
 <script>
   $(function(){
-    $('#__search_components').focus();
+    var orig = $('#__search_components').val();
+    $('#__search_components').focus().val('').val(orig);
   });
 </script>
