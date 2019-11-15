@@ -1,0 +1,12 @@
+build:image:
+  image: docker:stable  
+  services:
+    - docker:dind
+  stage: build
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -t ${CI_REGISTRY}/rosie/rosie/master .
+    - docker push ${CI_REGISTRY}/rosie/rosie/master
+  tags:
+    - docker
+    - build_image

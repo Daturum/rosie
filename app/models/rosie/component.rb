@@ -35,7 +35,7 @@ module Rosie
 
     def self.permitted_component_types
       Rails.cache.fetch("permitted_component_types #{
-        PaperTrail::Version.where(item_type: 'Rosie::Component').maximum(:id)}") do
+        Rosie::Version.where(item_type: 'Rosie::Component').maximum(:id)}") do
 
         component_types.keys.reject{ |component_type|
           new(component_type: component_type).permitted_contexts.blank?
