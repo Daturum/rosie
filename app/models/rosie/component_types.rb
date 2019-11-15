@@ -25,7 +25,9 @@ module Rosie
           template: '<%= @component.name.humanize %> role description and change log'
         },
         layout: {
-          hints: "Render template within this layout: <%%= yield %><br/>#{autoreplace_filepaths_link}",
+          hints: %(Render template within this layout: <%%= yield %><br/>
+            Use another layout (e.g. user/layout): <%%= render template: 'layouts/user/layout' %><br/>
+            #{autoreplace_filepaths_link}),
           template:  <<~LAYOUT_TEMPLATE
             <html>
               <head>

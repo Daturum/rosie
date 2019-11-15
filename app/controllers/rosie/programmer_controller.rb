@@ -198,6 +198,15 @@ module Rosie
       render js: "alert('success'); window.location.reload(true)";
     end
 
+    def search
+      query = params[:q]
+      if query.blank? || query.length < 3;
+        @components = nil
+      else
+        @components = Component.where('body ILIKE ?', "%#{params[:q]}%");
+      end
+    end
+
     private
 
     def with_captured_stdout

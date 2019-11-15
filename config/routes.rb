@@ -12,6 +12,8 @@ Rosie::Engine.routes.draw do
   post "p/components", to: "programmer#manage_component"
   post "p/autoreplace", to: "programmer#autoreplace_filepaths_in_html_component"
   put  "p/components", to: 'programmer#unlock_editing'
+  
+  get  "p/search", to: "programmer#search"
 
   # User area
   get  'files/(*hashed_path)', to: 'client#get_asset_file'

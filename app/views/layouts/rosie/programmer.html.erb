@@ -25,6 +25,14 @@
         $(this).attr('href', $(this).attr('href').split('?')[0]+'?email='+
           encodeURIComponent(prompt('Enter email to invite')));
       }
+      $(function(){
+        $("#__search_components").keydown(function(e){
+            if ((e.metaKey || e.ctrlKey) && e.keyCode == 83) {
+              e.preventDefault();
+              window.location = '/p/search?q='+encodeURIComponent($(this).val());
+            }
+        });
+      });
     </script>
   </head>
 
@@ -50,6 +58,7 @@
       <a href="/?__=a" target="_blank" title="Analyze memory (object space)">a</a>
       <a href="/?__=f" target="_blank" title="Flame graph">f</a>
       <span style="float: right;"><%= Rosie::Programmer.short_name(Rosie::Programmer.current) %></span>
+      <span style="color:gray">|</span> <input type="text" id="__search_components" placeholder="Search components" value="<%=params[:q]%>"></input>
     </div>
     <%= yield %>
     <%= render 'ajax_error_replay_for_programmer' %>

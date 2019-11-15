@@ -1,0 +1,26 @@
+ <% if @components.blank? || @components.count == 0 %>
+
+  <i>No components found. Please check your query</i>
+
+<% else %>
+
+  <pre>
+  <% @components.order('path').each do |component| %>
+<%= link_to component.path, url_for(controller: :programmer, action: :components, path: component.path, q: params[:q]) %>
+<%= component.body.split("\n").map.with_index{|line, index|
+    [line, index]}.select{|arr|
+    arr[0] =~ /#{params[:q]}/i}.map{|arr|
+      "#{link_to arr[1].to_s.rjust(3),
+        "#{url_for(controller: :programmer, action: :components, path: component.path, q: params[:q])}##{arr[1]+1}:1"
+      }: #{arr[0]}"}.join("\n").html_safe %>
+  <hr/>
+  <% end %>
+  </pre>
+
+<% end %>
+
+<script>
+  $(function(){
+    $('#__search_components').focus();
+  });
+</script>

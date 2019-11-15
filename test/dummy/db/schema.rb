@@ -10,40 +10,47 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_05_13_202631) do
+ActiveRecord::Schema.define(version: 2018_07_20_190800) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "rosie_asset_files", force: :cascade do |t|
-    t.string "filename"
-    t.string "content_type"
-    t.binary "file_contents"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.integer "size"
-    t.boolean "autoreplace_filepaths"
+  create_table "rosie_prop_search", force: :cascade do |t|
+    t.string "name"
+    t.string "link"
+    t.text "result"
+    t.integer "record_count"
+    t.integer "interesting_count"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.binary "excels_zip"
+    t.integer "mindiscount"
+    t.integer "minprice"
+    t.integer "maxprice"
+    t.integer "minsotka"
+    t.string "grouping_rules"
+    t.index ["name"], name: "index_rosie_prop_search_on_name"
   end
 
-  create_table "rosie_components", force: :cascade do |t|
-    t.string "component_type"
-    t.string "path"
-    t.string "locale"
-    t.string "handler"
-    t.boolean "partial"
-    t.string "format"
-    t.text "body"
-    t.string "editing_locked_by"
-    t.text "loading_error"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "rosie_programmers", force: :cascade do |t|
-    t.string "email"
-    t.string "password_digest"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "rosie_user_properties", force: :cascade do |t|
+    t.decimal "square"
+    t.decimal "total_price"
+    t.decimal "sotka_price"
+    t.string "address"
+    t.string "category"
+    t.string "telephones"
+    t.string "description"
+    t.string "cottage_name"
+    t.string "additional"
+    t.string "link"
+    t.integer "cian_id"
+    t.index ["address"], name: "index_rosie_user_properties_on_address"
+    t.index ["category"], name: "index_rosie_user_properties_on_category"
+    t.index ["cian_id"], name: "index_rosie_user_properties_on_cian_id"
+    t.index ["cottage_name"], name: "index_rosie_user_properties_on_cottage_name"
+    t.index ["sotka_price"], name: "index_rosie_user_properties_on_sotka_price"
+    t.index ["square"], name: "index_rosie_user_properties_on_square"
+    t.index ["total_price"], name: "index_rosie_user_properties_on_total_price"
   end
 
   create_table "versions", force: :cascade do |t|

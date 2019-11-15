@@ -6,6 +6,7 @@ module Rosie
 
     #prevent autoloading binary contents by default
     default_scope { select(column_names - ['file_contents']) }
+    def self.count; super('*') end # workaround for default_scope
 
     # CLASS METHODS
 
