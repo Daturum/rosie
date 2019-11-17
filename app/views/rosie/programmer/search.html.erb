@@ -1,18 +1,24 @@
- <% if @components.blank? || @components.count == 0 %>
+<style media="screen">
+  .highlight {background-color: #ffde40; cursor: pointer;}
+</style>
+
+<% if @components.blank? || @components.count == 0 %>
 
   <i>No components found. Please check your query</i>
 
 <% else %>
 
-  <pre>
+  <pre id="result">
   <% @components.order('path').each do |component| %>
 <%= link_to component.path, url_for(controller: :programmer, action: :components, path: component.path, q: params[:q]) %>
 <%= component.body.split("\n").map.with_index{|line, index|
     [line, index]}.select{|arr|
-    arr[0] =~ /#{params[:q]}/i}.map{|arr|
-      "#{link_to arr[1].to_s.rjust(3),
-        "#{url_for(controller: :programmer, action: :components, path: component.path, q: params[:q])}##{arr[1]+1}:1"
-      }: #{arr[0]}"}.join("\n").html_safe %>
+    arr[0] =~ /#{params[:q]}/i}.map{|line_text, index|
+      ch_index = line_text.index(/#{params[:q]}/i)
+      "#{link_to index.to_s.rjust(3),
+        "#{url_for(controller: :programmer, action: :components, path: component.path, q: params[:q])
+          }##{index + 1}:#{ch_index + 1}:#{ch_index + params[:q].length + 1}"
+      }: #{line_text}"}.join("\n").html_safe %>
   <hr/>
   <% end %>
   </pre>
@@ -20,8 +26,19 @@
 <% end %>
 
 <script>
-  $(function(){
+  $(function(){ // set cursor to the end of search input
     var orig = $('#__search_components').val();
     $('#__search_components').focus().val('').val(orig);
+  });
+
+  $(function(){ // highlight search query
+    $('#result').highlight(['<%=params[:q]%>']);
+  });
+
+
+  $(function(){ // click on highlighted word to go to source
+    $('.highlight').click(function(){
+      window.location = $(this).prevAll('a:first')[0].href;
+    });
   });
 </script>

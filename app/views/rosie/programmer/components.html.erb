@@ -282,9 +282,9 @@ editor.on('cursorActivity', function(cm) {
     $(document).ready(function(){
       setTimeout(function(){
         var pos = window.location.hash.substr(1).split(':');
-        editor.setCursor(0, 0);
+        editor.setSelection({line:0, ch:0},{line:0, ch:1});
         editor.replaceSelection(' '); editor.undo(); // workaround to "floating" cursor position bug
-        editor.setCursor(pos[0]-1, pos[1]-1);
+        editor.setSelection({line:pos[0]-1, ch:pos[1]-1}, {line:pos[0]-1, ch:pos[pos.length-1]-1});
       }, 200);
     });
   }
