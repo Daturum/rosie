@@ -35,7 +35,6 @@
     $('#result').highlight(['<%=params[:q]%>']);
   });
 
-
   $(function(){ // click on highlighted word to go to source
     $('.highlight').click(function(){
       window.location = $(this).prevAll('a:first')[0].href;
