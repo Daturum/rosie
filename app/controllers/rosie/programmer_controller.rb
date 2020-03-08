@@ -138,6 +138,8 @@ module Rosie
     end
 
     def files
+      file_use_case = params[:file_use_case].presence
+      @files = Rosie::AssetFile.order('updated_at').where(file_use_case: file_use_case)
     end
 
     def manage_file
@@ -177,7 +179,7 @@ module Rosie
 
           # rewrite
           AssetFile.where(filename: file.original_filename).delete_all if params[:rewrite]
-          AssetFile.new(file: file, autoreplace_filepaths: autoreplace).save!
+          AssetFile.new(file: file, file_use_case: params[:file_use_case], autoreplace_filepaths: autoreplace).save!
         end
 
         Programmer.update_last_action_timestamp
