@@ -3,7 +3,7 @@ module Rosie
     has_paper_trail ignore: [:file_contents]
     validates :filename, uniqueness: { message: "file exists: %{value}"}, presence: true
     validates :size, :numericality => { less_than: 10.megabytes }
-    before_save :ensure_file_use_case_not_empty_string
+    before_save :ensure_file_role_not_empty_string
 
     #prevent autoloading binary contents by default
     default_scope { select(column_names - ['file_contents']) }
@@ -64,8 +64,8 @@ module Rosie
       hash = Digest::MD5.hexdigest(key)[-5..-1]
     end
 
-    def ensure_file_use_case_not_empty_string
-      self.file_use_case = nil if self.file_use_case == ''
+    def ensure_file_role_not_empty_string
+      self.file_role = nil if self.file_role == ''
     end
   end
 end

@@ -1,15 +1,15 @@
 <% # HTML %>
 
-File use case: <%= select_tag 'file_use_case',
+File role: <%= select_tag 'file_role',
   options_for_select(
-    Rosie::AssetFile.group(:file_use_case).count(:id).tap{|result| result[nil] ||= 0}.
-      sort_by{|k,v| k || ""}.map{|k,v| ["#{k || '[default]'} - #{v}",k]},
-    params[:file_use_case]),
-  onchange: "window.location = '?file_use_case=' + encodeURIComponent($(this).val());" %>
+    Rosie::AssetFile.group(:file_role).count(:id).tap{|result| result[nil] ||= 0}.
+      sort_by{|k,v| k || ""}.map{|k,v| ["#{k || '[user]'} - #{v}",k]},
+    params[:file_role]),
+  onchange: "window.location = '?=' + encodeURIComponent($(this).val());" %>
 (total - <%= Rosie::AssetFile.count%>)
 <br/><br/>
 
-<% cache "asset_files_index #{Rosie::AssetFile.cache_invalidation_key}_#{params[:file_use_case]}" do %>
+<% cache "asset_files_index #{Rosie::AssetFile.cache_invalidation_key}_#{params[:file_role]}" do %>
 
   <% @files.each do |file| %>
     <%= link_to file.filename, asset_file_path(file.filename) %>&nbsp;<a href="#" title="Delete this file" class="delete">×</a>
@@ -31,9 +31,13 @@ File use case: <%= select_tag 'file_use_case',
     label_tag 'remove_outer_directory_from_filepath' do %>Remove outer directory from filepath<% end %><br/>
   <%= check_box_tag('autoreplace_filepaths_in_css_and_js_files') %><%=
     label_tag 'autoreplace_filepaths_in_css_and_js_files' do %>Autoreplace filepaths in css and js files<% end %><br/>
+  File role (for categorisation) <%= select_tag 'file_role',
+    options_for_select(
+      Rosie::Component.where(component_type: :role).where.not(path: 'user').pluck(:path).unshift('user'),
+      params[:file_role]),
+    onchange: "window.location = '?=' + encodeURIComponent($(this).val());" %><br/>
   Prepend this path to uploaded files <input type="text" name="prepend_path" placeholder="prepend path"></input><br/>
-  File use case (for easy categorisation) <input value="<%=params[:file_use_case]%>" type="text" name="file_use_case" placeholder="file use case"></input>
-  <br/><br/>
+  <br/>
   Upload directory
   <input name="files[]" type="file" multiple="multiple" webkitdirectory mozdirectory
     onchange="$('input[type=file]').hide().parent().submit();"></input>
