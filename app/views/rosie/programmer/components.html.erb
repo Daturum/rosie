@@ -123,7 +123,7 @@
         <% end %>
       </span>
       <% unless @component.get_locking_programmer %>
-        <span style="color:gray;">Cmd|Ctrl+S to save changes</span>
+        <span style="color:gray;" class="menu">Cmd|Ctrl+S to <a onclick="saveComponent();return false;" href="#">save changes</a></span>
       <% end %>
       <br/>
       <textarea id="body" style="display:none;"><%= @component.body %></textarea>
