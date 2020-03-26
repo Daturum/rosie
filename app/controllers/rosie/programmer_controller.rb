@@ -68,7 +68,14 @@ module Rosie
             component_type: (params[:type] ||
               Component.component_types.keys.first))
           if(params[:context].blank?)
-            redirect_to current_path(context: @component.permitted_contexts[0])
+            new_component_context = @component.permitted_contexts[0]
+
+            referer_context = CGI::parse(URI::parse(request.referer).query)['path'][0]
+            if referer_context.in?(@component.permitted_contexts)
+              new_component_context = referer_context
+            end
+
+            redirect_to current_path(context: new_component_context)
           else
             name = (params[:name] || '').parameterize.underscore
             @component.set_context_and_name(params[:context], name)
