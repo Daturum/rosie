@@ -71,6 +71,7 @@ module Rosie
         end
       else
         if self.class.programmer_authentication_required? || session['is_programmer']
+          sleep 5
           request_http_basic_authentication
         end
       end

@@ -43,7 +43,6 @@ module Rosie
         end
       elsif !programmer.authenticate(password)
         Rails.logger.fatal "Invalid password attempt for #{email}"
-        sleep 5
         return false
       end
 
