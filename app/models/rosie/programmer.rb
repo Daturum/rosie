@@ -1,6 +1,6 @@
 module Rosie
   class Programmer < Rosie::ApplicationRecord
-    has_paper_trail ignore: [:updated_at]
+    has_paper_trail(ignore: [:updated_at], on: [:create, :update, :destroy])
     has_secure_password
     validates :email, format: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i, uniqueness: true
     validates :password, length: { minimum: 6 }
@@ -43,6 +43,7 @@ module Rosie
         end
       elsif !programmer.authenticate(password)
         Rails.logger.fatal "Invalid password attempt for #{email}"
+        sleep 5
         return false
       end
 
