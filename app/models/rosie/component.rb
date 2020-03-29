@@ -1,6 +1,11 @@
 module Rosie
   class Component < Rosie::ApplicationRecord
-    has_paper_trail ignore: [:updated_at, :editing_locked_by, :loading_error]
+    has_paper_trail(
+      ignore: [:updated_at, :editing_locked_by, :loading_error],
+      meta: {commit_message: :version_commit_message})
+    attr_accessor :version_commit_message
+    validates :version_commit_message,  presence: true
+    
     validates :path,            uniqueness: true, presence: true
     # validates :partial,         inclusion: { in: [ true, false ] }
     validates :component_type,  inclusion: { in: lambda do |c|
@@ -13,6 +18,7 @@ module Rosie
     validates :handler,         inclusion: { in: lambda do |c| c.permitted_handlers end }
     validates :name,            format: /\A[a-z0-9_]+\z/i
     serialize :loading_error,   ActiveSupport::HashWithIndifferentAccess
+
 
     # CLASS METHODS
 
@@ -60,7 +66,7 @@ module Rosie
       raise "Cannot lock editing: already locked by #{editing_locked_by} @ #{updated_at}" if get_locking_programmer
       ActiveRecord::Base.transaction do
         self.class.where(editing_locked_by: Programmer.current).update_all(editing_locked_by: nil, updated_at: 0.seconds.ago)
-        update!(editing_locked_by: Programmer.current, updated_at: 0.seconds.ago)
+        save!(editing_locked_by: Programmer.current, updated_at: 0.seconds.ago, :validate => false)
       end
     end
 
@@ -126,6 +132,7 @@ module Rosie
       name = (occurence == 'multiple' ? name : component_type)
       self.path = "#{context}/#{name}".sub(/^root\//, '')
     end
+
     # generating cache_hash to invalidate on change
 
     def cache_hash

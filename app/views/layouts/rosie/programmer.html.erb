@@ -7,11 +7,15 @@
     <%= stylesheet_link_tag    "rosie/programmer", media: "all" %>
     <style>
       * { font-family: 'Roboto Mono', monospace; font-size: 12px;}
-      .main.menu { margin-bottom: 20px; }
+      .main.menu { margin-bottom: 20px; color: gray; }
       .menu a, .menu span { color: gray; }
       .menu a { text-decoration-color: #ccc; }
       .menu .selected {color: black; }
       hr { border: none; border-top: #ddd solid 1px; }
+      .main.menu #__search_components {width: 150px;}
+      .main.menu #commit_message {width: 300px;}
+
+      #analyze_options {display: none;}
     </style>
     <%= javascript_include_tag 'rosie/programmer' %>
     <script>
@@ -21,10 +25,12 @@
             $(this).addClass('selected')
         });
       });
+
       window.invite_programmer = function(){
         $(this).attr('href', $(this).attr('href').split('?')[0]+'?email='+
           encodeURIComponent(prompt('Enter email to invite')));
       }
+
       $(function(){
         $("#__search_components").keydown(function(e){
             if (e.keyCode == 13) {
@@ -32,6 +38,20 @@
               window.location = '/p/search?q='+encodeURIComponent($(this).val());
             }
         });
+      });
+
+      $(function(){
+        $('a#analyze').click(function() { $(this).next().fadeIn(); return false;})
+      });
+
+      $(function(){
+        var check_to_resize_full_width = function(el){
+          if($(el).height() > 20){$(el).css('width','100%').parent().css('width','100%');}
+        }
+        $('#commit_message').focus(
+          function(){autosize(this); check_to_resize_full_width(this);}).keydown(
+          function(){var el = this; setTimeout(function(){check_to_resize_full_width(el);}, 50);}
+        );
       });
     </script>
   </head>
@@ -49,16 +69,22 @@
       <%= link_to "Invite", invite_programmer_path, method: 'POST', remote: true,
         onclick: "invite_programmer.call(this);" %>
 
-      <span style="color:gray">| Analyze at runtime: ?__=</span>
-      <a href="/?__=c" target="_blank" title="Inject web-[C]onsole to a page">c</a>
-      <a href="/?__=t" target="_blank" title="(T)rack and display components, used by a page">t</a>
-      <a href="/?__=p" target="_blank" title="Profiler">p</a>
-      <a href="/?__=g" target="_blank" title="Garbage collector">g</a>
-      <a href="/?__=m" target="_blank" title="Memory profiler">m</a>
-      <a href="/?__=a" target="_blank" title="Analyze memory (object space)">a</a>
-      <a href="/?__=f" target="_blank" title="Flame graph">f</a>
-      <span style="float: right;"><%= Rosie::Programmer.short_name(Rosie::Programmer.current) %></span>
-      <span style="color:gray">|</span> <input type="text" id="__search_components" placeholder="Search (press Enter)" value="<%=params[:q]%>"></input>
+      <a href="#" id="analyze">Analyze at runtime</a><span id="analyze_options">: ?__=
+          <a href="/?__=c" target="_blank" title="Inject web-[C]onsole to a page">c</a>
+          <a href="/?__=t" target="_blank" title="(T)rack and display components, used by a page">t</a>
+          <a href="/?__=p" target="_blank" title="Profiler">p</a>
+          <a href="/?__=g" target="_blank" title="Garbage collector">g</a>
+          <a href="/?__=m" target="_blank" title="Memory profiler">m</a>
+          <a href="/?__=a" target="_blank" title="Analyze memory (object space)">a</a>
+          <a href="/?__=f" target="_blank" title="Flame graph">f</a>
+        </span>
+      <input type="text" id="__search_components" placeholder="Search (press Enter)" value="<%=params[:q]%>"></input>
+
+      <div style="float: right;">
+        <label style="float:left; margin:3px 5px 0 0;"><%= Rosie::Programmer.short_name(Rosie::Programmer.current) %> </label>
+        <textarea style="resize:none; border-color: #dfdfdf;" rows="1" id="commit_message" placeholder="commit message"></textarea>
+      </div>
+
     </div>
     <%= yield %>
     <%= render 'ajax_error_replay_for_programmer' %>

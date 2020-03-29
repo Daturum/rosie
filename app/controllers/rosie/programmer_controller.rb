@@ -90,10 +90,13 @@ module Rosie
     end
 
     def manage_component
+      raise 'Commit message is needed' if params[:commit_message].blank?
+
       Component.transaction do
 
         # deleting component
         if params[:delete] && @component = Component.find_by(path: params[:delete])
+          @component.version_commit_message = params[:commit_message]
           @component.destroy!
           render js: "window.location = '?'";
           return
@@ -102,6 +105,7 @@ module Rosie
         # creating or updating component
         raise "No original path given" unless params.has_key?(:original_path)
         original_path = params[:original_path]
+
         @component = ((original_path != "") ? Component.find_by(path: original_path) :
           Component.new(component_type: params[:new_component_type]));
 
@@ -114,6 +118,7 @@ module Rosie
         @component.set_context_and_name(params[:context], params[:name])
 
         @component.update!(
+          version_commit_message: params[:commit_message],
           body: params[:body],
           format: params[:format],
           handler: params[:handler])

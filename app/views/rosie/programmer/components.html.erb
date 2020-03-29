@@ -80,7 +80,8 @@
       <% if (@version_count = @component.versions.count) > 0 %>
         <hr/>
         <div id="versions">
-          <% @component.versions.reorder('ID DESC').limit(100).each.with_index do |v, index| %>
+          <% @component.versions.reorder('ID DESC').limit(100).
+               select(:id, :whodunnit, :created_at).each.with_index do |v, index| %>
             <div class="version" data-index="<%= @version_count - index + 1%>">
               <span><%= v.whodunnit ? Rosie::Programmer.short_name(v.whodunnit) : raw('<i>Undefined</i>') %></span>
               <%= link_to({path: params[:path], diff_with: (v.id if index > 0)},
@@ -127,11 +128,20 @@
       <% end %>
       <br/>
       <textarea id="body" style="display:none;"><%= @component.body %></textarea>
-      <% if params[:diff_with] %>
-        <%= hidden_field_tag 'diff_version_body', @component.paper_trail.version_at(
-          params[:diff_with].to_i > 0 ?
-            @component.versions.find(params[:diff_with]).created_at + 0.5.seconds :
-            @component.created_at + 0.5.seconds).body %>
+      <% if params[:diff_with]
+            @diff_version_component = @component.paper_trail.version_at(
+            params[:diff_with].to_i > 0 ?
+              @component.versions.find(params[:diff_with]).created_at + 0.5.seconds :
+              @component.created_at + 0.5.seconds) %>
+
+        <%= hidden_field_tag 'diff_version_body', @diff_version_component.body %>
+
+        <% # Собираем историю commit message из всех версий %>
+        <%= hidden_field_tag 'commit_message_history',
+              @component.versions.where('id > ?', params[:diff_with]).reorder('id desc').map{ |v|
+                commit_message = v.commit_message.presence || '<i>No commit message</i>'
+                "[#{v.created_at.utc} - #{v.whodunnit}]\n#{commit_message}\n\n"
+              }.join().html_safe %>
       <% end %>
       <%= render 'loading_error' if @component.loading_error.present? %>
       <%= render 'hints' %>
@@ -199,14 +209,26 @@ $(document).keydown(function (e) {
   }
 });
 
-function checkLockIsFree()  {
+function checkLockIsFree() {
   if($('#locked_by').text().trim() != "") { return false; } else { return true; }
+}
+
+function checkCommitMessagePresent() {
+  if($('#commit_message').val() == "") {
+    alert('Please enter commit message');
+    $('#commit_message').css('background-color', 'rgb(255, 255, 207)').focus();
+    return false;
+  } else {
+    return true;
+  }
 }
 
 function saveComponent() {
   if(!checkLockIsFree()) { alert($('#locked_by').text().trim()); return; }
+  if(!checkCommitMessagePresent()) return false;
 
   editor.getWrapperElement().style.background = '#eee';
+  editor.focus();
   $.ajax({url: "?", type: "POST",
     data: {
       body: $('#body').val(),
@@ -215,6 +237,7 @@ function saveComponent() {
       name: $('#name').val(),
       format: $('#format').val(),
       handler: $('#handler').val(),
+      commit_message: $('#commit_message').val(),
       original_path: $('#component_form').data('original-path'),
       new_component_type: $('#component_form').data('new-component-type'),
       latest_version_timestamp: $('#component_form').data('latest-version-timestamp')}}).
@@ -227,6 +250,7 @@ function saveComponent() {
       alert(jqXHR.responseText);
       editor.getWrapperElement().style.background = '#faa';
     });
+  return true;
 }
 
 </script>
@@ -245,12 +269,15 @@ if(QueryString()['diff_with'])
 window.deleteLinkClicked = function(link)
 {
   if(!checkLockIsFree()) return;
+  if(!checkCommitMessagePresent()) return false;
 
   var pathToDelete = $(link).closest('div[component_path]').attr('component_path');
   if(confirm('Delete "' + pathToDelete + '" – Are you sure?'))
   {
-    $.ajax({url: "?", type: "POST", data: {delete: pathToDelete}}).
-      success(function(result){ eval(result); });
+    $.ajax({url: "?", type: "POST", data: {
+        delete: pathToDelete,
+        commit_message: $('#commit_message').val()
+      }}).success(function(result){ eval(result); });
     $(this).remove();
   }
 }
@@ -359,10 +386,16 @@ if($('#diff_version_body').size() > 0)
 {
   var origin = $('#diff_version_body').val(),
       current_value = $('#body').val(),
+      commit_message_history = $('#commit_message_history').val(),
       $current_version = $('#versions>.version:first'),
       $compared_version = $('#versions>.version a.selected').parent();
 
   $('#component_form').html(
+    '<b>Diffing version ' + $current_version.data('index') + " (current) " +
+    'with version ' + $compared_version.data('index') + '</b>'+
+    '<div><pre style="margin-top:0;">' +
+    (commit_message_history == "" ? '<i>No commit message history</i>' : commit_message_history) +'</pre></div>'+
+
     '<span>Version ' + $current_version.data('index') + " (current) – " +
     $current_version.find('span').text() + ', ' +
     $current_version.find('a').attr('title')+"</span>" +
