@@ -20,11 +20,3 @@ gem 'puma'
 # adding as development dependency because xlsx is often used
 # for configuration storage
 gem 'creek'
-
-# TODO: Remove and make this a new branch
-envgems = %(gem 'kmeans-clusterer';gem 'gnuplot')
-if envgems
-  envgems.split(';').each do |gem_string|
-    eval gem_string
-  end
-end
