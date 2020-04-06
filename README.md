@@ -25,7 +25,7 @@ Rosie is created to circumvent these restrictions.
 The good news is that an interface programmer actually doesn't need to have all the
 backend set up and business logic learned to create the interface.
 That comes from the definition of an interface: an interface is a way for a user to communicate with the system.
-A user doesn't need to know how the system works to work with it. Neither does interface programmer.
+A user doesn't need to know how the system works at whole to work with it. Neither does interface programmer.
 Everything a user (and an interface programmer) needs to know is which objects they can work with and
 how to work with them.
 
