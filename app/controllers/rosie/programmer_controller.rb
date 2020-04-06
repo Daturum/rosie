@@ -1,3 +1,4 @@
+require 'rosie/zip_dir.rb'
 module Rosie
   class ProgrammerController < ApplicationController
     def self.programmer_authentication_required?; true end
@@ -219,6 +220,20 @@ module Rosie
       else
         @components = Component.where('body ILIKE ?', "%#{params[:q]}%");
       end
+    end
+
+    def download_role_files
+      # create zip file with directory of all role components
+      role = params[:role]
+      raise('No such role - ' + role) unless File.exists? Rails.root.join("app/interfaces/#{role}/#{role}.txt")
+      temp_file = Tempfile.new("#{role}.zip")
+
+      ZipDir.new(Rails.root.join("app/interfaces/#{role}"), temp_file.path).write
+
+      send_data(File.read(temp_file), filename: "#{role}.zip", type: 'application/zip')
+
+      temp_file.close
+      temp_file.unlink
     end
 
     private

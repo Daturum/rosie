@@ -1,11 +1,12 @@
 module Rosie
   class ClientController < ApplicationController
-    protect_from_forgery with: :exception, except: [:get_asset_file]
+    protect_from_forgery with: :exception, except: [:get_asset_file], unless: :is_public_json_request
+    around_action :log_partial_events,                        only: :render_component_template
     around_action :with_handling_of_path_not_exists,          only: :render_component_template
     after_action  :inject_request_components,                 only: :render_component_template
     after_action  :inject_ajax_error_handling_for_programmer, only: :render_component_template
 
-    prepend_view_path Rails.root.join('app', 'interfaces')
+    prepend_view_path ComponentTypes.components_directory
 
     def self.programmer_authentication_required?; false end
 
@@ -35,21 +36,43 @@ module Rosie
     end
 
     def render_component_template
-      path = [params[:role],params[:scenario],params[:json_action]].reject(&:blank?).join('/')
+      role, scenario, json_action = params[:role], params[:scenario], params[:json_action]
       fmt = params[:format] || 'html'
-      layout_path = "#{params[:role]}/layout"
-      layout = MemoryStore.fetch_invalidate "layout_path_for_#{path}_#{fmt}", Programmer.last_action_timestamp do
-        (Component.where(path: layout_path, format: fmt).exists? ? layout_path : nil)
-      end
-      render template: path, format: fmt, layout: layout
+      template_path = ComponentTypes.rails_template_path(role, scenario, json_action)
+      component_path = ComponentTypes.component_path(role, scenario, json_action)
+      layout_component_path = ComponentTypes.layout_component_path(role, scenario, json_action)
+      Component.add_request_component_path component_path
+
+      layout_rails_template_path = ComponentTypes.rails_layout_template_path(role, scenario, json_action, fmt)
+      Component.add_request_component_path layout_component_path if layout_rails_template_path
+
+      render template: template_path, format: fmt, layout: layout_rails_template_path
     end
 
     private
 
+    def is_public_json_request
+      params[:json_action].present? && params[:json_action] =~ /_public$/
+    end
+
     def inject_request_components
-      if Component.request_components_tracked?
+      if Programmer.current && Component.request_components_tracked?
         response.body = response.body.sub('</body>',
           %(#{render_to_string 'rosie/programmer/_request_components_injection'}</body>))
+      end
+    end
+
+    def log_partial_events &block
+      if Programmer.current && Component.request_components_tracked?
+        callback = lambda do |event_name, start_at, end_at, id, payload|
+          path = ComponentTypes.get_component_by_rails_template_path(payload[:identifier]).try :path
+          Component.add_request_component_path(path) if path
+        end
+        ActiveSupport::Notifications.subscribed(callback, "render_partial.action_view") do
+          block.call
+        end
+      else
+        block.call
       end
     end
 

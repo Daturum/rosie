@@ -5,7 +5,7 @@ module Rosie
       meta: {commit_message: :version_commit_message})
     attr_accessor :version_commit_message
     validates :version_commit_message,  presence: true
-    
+
     validates :path,            uniqueness: true, presence: true
     # validates :partial,         inclusion: { in: [ true, false ] }
     validates :component_type,  inclusion: { in: lambda do |c|
@@ -90,10 +90,10 @@ module Rosie
     # STORAGE
 
     def name
-      path.present? ? path.reverse.split('/', 2)[0].reverse : ""
+      path.present? ? path.rpartition('/')[-1] : ""
     end
     def context
-      result = (path.reverse.split('/', 2)[1].try(:reverse) if path)
+      result = (path.rpartition('/')[0] if path)
       result.present? ? result : 'root';
     end
     def parent

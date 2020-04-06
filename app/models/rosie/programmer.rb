@@ -65,5 +65,9 @@ module Rosie
       programmer.save!
       programmer
     end
+
+    def self.code_change_description commit_message
+      "[#{Time.now.utc} - #{Programmer.current.presence || '[unknown]'}] #{commit_message}"
+    end
   end
 end

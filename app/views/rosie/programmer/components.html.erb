@@ -37,7 +37,10 @@
           end
           %>
       <% components_ordered.each do |entry| c = entry[1]  %>
-        <div component_path="<%= c.path %>">
+        <div component_path="<%= c.path %>"
+          component_filepath="<%=Rosie::ComponentTypes.relative_filepath(c)%>"
+          component_filesize="<%=File.size Rosie::ComponentTypes.absolute_filepath(c)%>">
+
           <% # this is link to the component %>
           <%= link_to component_link_text(c), {path: c.path}, class: 'edit_link'
 
@@ -49,8 +52,12 @@
           <% end %>
 
           <div class="side_menu__component-actions">
-            <% # this is span to toggle visibility component's subcomponents %>
+            <% # this is span to toggle visibility component's subcomponents, download and syn %>
             <% if c.component_type == 'role' %>
+              <a class="download_role_files secondary" href="/p/download_role_files?role=<%=c.path%>"
+                    title="download role files">&darr;</a>
+              <span class="enable_sync secondary" onclick="window.enable_sync(this);"
+                    title="enable sync with local folder">&#x21C8;</span>
               <span class="toggle_components secondary" onclick="window.toggle_dependent_components(this);"
                     title="collapse/expand"></span>
             <% end %>
@@ -111,7 +118,7 @@
         <input type="string" id="name" value="<%= @component.name %>"></input>
       <% end %>
       @
-      <%= select_tag "context", options_for_select(@component.permitted_contexts, @component.context),
+      <%= select_tag "context", options_for_select(@component.permitted_contexts.sort, @component.context),
         onchange: "context_select_changed.call(this);"%>&emsp;
 
       format <%= select_tag "format", options_for_select(@component.permitted_formats, @component.format) %>&emsp;

@@ -8,8 +8,8 @@
   #request_components span {color: gray; font-size: 10px;}
 </style>
 <div id="request_components">
-  <div onclick="$(this).nextAll().toggle();"><%= Component.request_components_usage.count %> <span>tpls</span></div>
-  <% Component.request_components_usage.to_a.reverse.each do |component_path, count| %>
+  <div onclick="$(this).nextAll().toggle();"><%= Rosie::Component.request_components_usage.count %> <span>tpls</span></div>
+  <% Rosie::Component.request_components_usage.to_a.each do |component_path, count| %>
     <%= link_to "#{component_path}#{"<span> ×#{count}</span>" if count > 1}".html_safe,
           programmer_component_path(component_path), target: :blank, style: 'display: none;' %>
   <% end %>

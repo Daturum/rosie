@@ -22,7 +22,12 @@ module Rosie
         role: {
           prompt: 'Enter role name underscored (e.g. admins, moderators, report_viewers)',
           hints: "This is role description. Write here main things to consider and log changes.",
-          template: '<%= @component.name.humanize %> role description and change log'
+          template: <<~ROLE_TEMPLATE
+            <%= @component.name.humanize %> role description
+
+            CHANGE LOG
+            <%= Programmer.code_change_description('Role created') %>
+          ROLE_TEMPLATE
         },
         layout: {
           hints: %(Render template within this layout: <%%= yield %><br/>
@@ -118,6 +123,68 @@ module Rosie
         }
       }.with_indifferent_access.freeze
     end
+
+    ##############################################################################
+    # file paths, component paths and rails template paths
+    ##############################################################################
+
+    def self.components_directory
+      Rails.root.join('app','interfaces')
+    end
+
+    def self.relative_filepath component
+      is_in_self_directory = component.component_type.in? self.types.map{|k,v| v[:context_types]}.flatten
+      path = "#{component.path}#{ '/'+component.name if is_in_self_directory}.#{
+        component.format}.#{component.handler}".sub(/\.text\.ruby$/,'.rb').sub(/\.text\.raw$/,'.txt')
+      if component.component_type == 'partial'
+        segments = path.split('/')
+        segments[-1] = "_#{segments[-1]}"
+        path = segments.join('/')
+      end
+      path
+    end
+
+    def self.absolute_filepath component
+      self.components_directory.join(self.relative_filepath component).to_s
+    end
+
+    def self.component_path role, scenario=nil, json_action=nil
+      if role && scenario && json_action
+        "#{role}/#{scenario}/#{json_action}"
+      elsif role && scenario && !json_action
+        "#{role}/#{scenario}"
+      else role end
+    end
+
+    def self.rails_template_path role, scenario=nil, json_action=nil
+      result = self.component_path(role, scenario, json_action)
+      result += '/'+scenario if scenario && !json_action
+      result
+    end
+
+    def self.layout_component_path role, scenario=nil, json_action=nil
+      "#{role}/layout"
+    end
+
+    def self.rails_layout_template_path role, scenario=nil, json_action=nil, format=nil
+      component_path = self.component_path(role,  scenario, json_action)
+      MemoryStore.fetch_invalidate "layout_path_for_#{component_path}_#{format}", Programmer.last_action_timestamp do
+        layout_path = self.layout_component_path(role,  scenario, json_action)
+        layout_component = Component.where(path: layout_path, format: format).first
+        if layout_component
+          ComponentTypes.relative_filepath layout_component
+        else nil end
+      end
+    end
+
+    def self.get_component_by_rails_template_path template_filepath
+      template_filepath = template_filepath.sub(/^#{self.components_directory.to_s}\//,'')
+      Component.where('path ilike ?',"#{template_filepath.split('/')[0]}/%").map do |c|
+        [self.relative_filepath(c), c]
+      end.to_h[template_filepath]
+    end
+
+
 
     def self.seed_db_on_first_request
       if 'Rosie::Component'.safe_constantize.try :table_exists?

@@ -14,8 +14,7 @@ module Rosie
     end
 
     def components_directory
-      RequestStore["components_directory"] ||=
-        Rails.root.join('app', 'interfaces')
+      RequestStore["components_directory"] ||= 'Rosie::ComponentTypes'.constantize.components_directory
     end
 
     def component_write_files_required?
@@ -106,17 +105,7 @@ module Rosie
     end
 
     def filepath component
-      base_dir = components_directory
-      base_dir = base_dir.join('layouts') if component.component_type == 'layout'
-      component_path = component.path
-      if component.component_type == 'partial'
-        segments = component_path.split('/')
-        segments[-1] = "_#{segments[-1]}"
-        component_path = segments.join('/')
-      end
-
-      base_dir.join("#{component_path}.#{component.format}.#{component.handler}").to_s.
-        sub(/\.ruby$/,'.rb').sub('.text.','.') #sub('.json.','.').
+      components_directory.join 'Rosie::ComponentTypes'.constantize.relative_filepath(component)
     end
 
     def load_or_reload_all_components
@@ -140,6 +129,14 @@ module Rosie
 
       FileUtils.mkdir_p(File.dirname component_filepath)
       File.write(component_filepath, component.body)
+
+      # TODO: remove this workaround when layouts with absolute paths can be used for rendering
+      if component.component_type == 'layout'
+        component_filepath = component_filepath.sub(components_directory.to_s,
+          components_directory.join('layouts').to_s)
+        FileUtils.mkdir_p(File.dirname component_filepath)
+        File.write(component_filepath, component.body)
+      end
     end
 
     def load_or_reload component
