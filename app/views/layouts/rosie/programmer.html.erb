@@ -82,7 +82,8 @@
 
       <div style="float: right;">
         <label style="float:left; margin:3px 5px 0 0;"><%= Rosie::Programmer.short_name(Rosie::Programmer.current) %> </label>
-        <textarea style="resize:none; border-color: #dfdfdf;" rows="1" id="commit_message" placeholder="commit message"></textarea>
+        <textarea style="resize:none; border-color: #dfdfdf;" rows="1" id="commit_message"
+          placeholder="commit message"><%=cookies[:commit_message]%></textarea>
       </div>
 
     </div>

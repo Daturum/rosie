@@ -10,8 +10,9 @@ Rosie::Engine.routes.draw do
 
   get  "p/components", to: "programmer#components"
   post "p/components", to: "programmer#manage_component"
-  post "p/autoreplace", to: "programmer#autoreplace_filepaths_in_html_component"
   put  "p/components", to: 'programmer#unlock_editing'
+  patch  "p/components", to: 'programmer#sync_components'
+  post "p/autoreplace", to: "programmer#autoreplace_filepaths_in_html_component"
   get  "p/download_role_files", to: 'programmer#download_role_files'
 
   get  "p/search", to: "programmer#search"

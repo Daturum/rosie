@@ -81,7 +81,8 @@ module Rosie
         json_action: {
           template: "<%% result = {time: Time.now.to_s('ddMMyyyy')} %>\n<%%= result.to_json.html_safe %>",
           hints: <<~ACTION_HINTS
-          These JSON actions are called by POST http method.
+          These JSON actions are used for gettime JSON answers from backed.
+          Include `_public' in JSON action name to allow external POST requests (disable csrf check)
           <%= link_to 'Test in new window', component_path(
             role: @component.root_context, scenario: @component.parent,
             json_action: @component.name, format: @component.format),
@@ -132,10 +133,31 @@ module Rosie
       Rails.root.join('app','interfaces')
     end
 
+    EXTENSIONS_TO_FORMAT_AND_HANDLER_EXCEPTIONS = {
+      'txt' => {format: 'text', handler: 'raw' },
+      'rb'  => {format: 'text', handler: 'ruby' }
+    }
+
+    def self.get_format_and_handler_by_file_extensions extensions
+      if EXTENSIONS_TO_FORMAT_AND_HANDLER_EXCEPTIONS[extensions]
+        EXTENSIONS_TO_FORMAT_AND_HANDLER_EXCEPTIONS[extensions]
+      else
+        format, handler = extensions.split('.')
+        {format: format, handler: handler}
+      end
+    end
+
+    def self.get_file_extensions_by_format_and_handler format, handler
+      EXTENSIONS_TO_FORMAT_AND_HANDLER_EXCEPTIONS.each do |ext, fh|
+        return ext if fh[:format] == format && fh[:handler] == handler
+      end
+      "#{format}.#{handler}"
+    end
+
     def self.relative_filepath component
       is_in_self_directory = component.component_type.in? self.types.map{|k,v| v[:context_types]}.flatten
       path = "#{component.path}#{ '/'+component.name if is_in_self_directory}.#{
-        component.format}.#{component.handler}".sub(/\.text\.ruby$/,'.rb').sub(/\.text\.raw$/,'.txt')
+        get_file_extensions_by_format_and_handler(component.format, component.handler)}"
       if component.component_type == 'partial'
         segments = path.split('/')
         segments[-1] = "_#{segments[-1]}"
@@ -177,11 +199,57 @@ module Rosie
       end
     end
 
-    def self.get_component_by_rails_template_path template_filepath
+    def self.get_component_by_rails_template_path template_filepath, init_new: false
       template_filepath = template_filepath.sub(/^#{self.components_directory.to_s}\//,'')
-      Component.where('path ilike ?',"#{template_filepath.split('/')[0]}/%").map do |c|
+      result = Component.where('path ilike ?',"#{template_filepath.split('/')[0]}/%").map do |c|
         [self.relative_filepath(c), c]
       end.to_h[template_filepath]
+
+      if result; result; elsif init_new
+        # here we try to infer which component_type corresponds to a given template_filepath
+        directory, _, filename_with_extensions = template_filepath.rpartition('/')
+        role = directory.split('/')[0]
+        component_name, extensions = filename_with_extensions.split('.', 2)
+        handler_and_format = get_format_and_handler_by_file_extensions(extensions)
+
+        component_type = nil
+        result_component = nil
+
+        permitted_types_and_paths = self.types.map do |component_type, type_description|
+          # count all permitted contexts of type in given role
+          permitted_contexts_within_role = Component.new(
+            component_type: component_type,
+            handler: handler_and_format[:handler],
+            format: handler_and_format[:format]
+          ).permitted_contexts.select{|ctx| (ctx == role) || ctx.start_with?("#{role}/") }
+
+          possible_paths = permitted_contexts_within_role.map do |ctx|
+            # new component within this context is valid and template path corresponds
+            path = "#{ctx}/#{component_name}"
+            test_component = Component.new(
+              component_type: component_type,
+              path: path,
+              handler: handler_and_format[:handler],
+              format: handler_and_format[:format],
+              version_commit_message: 'test'
+            )
+            if test_component.valid? && (relative_filepath(test_component) == template_filepath)
+              test_component.version_commit_message = nil
+              result_component = test_component
+              path
+            end
+          end.reject(&:blank?)
+
+          [component_type, possible_paths]
+        end.reject{|k,v| v.blank?}
+
+        if permitted_types_and_paths.flatten.count != 2
+          raise "Cannot infer component type from sync file '#{template_filepath
+                  }' (possible types found: #{permitted_types_and_paths.inspect})"
+        else
+          result_component
+        end
+      end
     end
 
 

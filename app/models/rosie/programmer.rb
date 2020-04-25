@@ -1,5 +1,7 @@
 module Rosie
   class Programmer < Rosie::ApplicationRecord
+    EDIT_TIMEOUT = 2.hours
+
     has_paper_trail(ignore: [:updated_at], on: [:create, :update, :destroy])
     has_secure_password
     validates :email, format: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i, uniqueness: true

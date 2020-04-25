@@ -1,4 +1,6 @@
-<% # CSS %>
+<% ##################################### %>
+<% ################ CSS ################ %>
+<% ##################################### %>
 <style>
   table.components_table { width: 100%; }
   table.components_table td { vertical-align: top; }
@@ -8,9 +10,25 @@
   a.secondary::before, span.secondary::before { content: '\2003'; }
   a.secondary:hover, span.secondary:hover { color: gray; }
   div.side_menu__component-actions { float: right; }
+  .bounce {
+    display: inline-block;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    transform-origin: bottom;
+    animation-name: bounce;
+    animation-timing-function: ease;
+    color: red !important;
+  }
+  @keyframes bounce {
+      0%   { transform: translateY(0); }
+      1%  { transform: translateY(10px); }
+      100% { transform: translateY(0); }
+  }
 </style>
 
-<% # HTML %>
+<% ##################################### %>
+<% ############### HTML ################ %>
+<% ##################################### %>
 <table class="components_table">
   <tr>
     <td class="side menu">
@@ -39,7 +57,7 @@
       <% components_ordered.each do |entry| c = entry[1]  %>
         <div component_path="<%= c.path %>"
           component_filepath="<%=Rosie::ComponentTypes.relative_filepath(c)%>"
-          component_filesize="<%=File.size Rosie::ComponentTypes.absolute_filepath(c)%>">
+          component_md5="<%=Digest::MD5.hexdigest File.read Rosie::ComponentTypes.absolute_filepath(c) %>">
 
           <% # this is link to the component %>
           <%= link_to component_link_text(c), {path: c.path}, class: 'edit_link'
@@ -52,12 +70,12 @@
           <% end %>
 
           <div class="side_menu__component-actions">
-            <% # this is span to toggle visibility component's subcomponents, download and syn %>
+            <% # this is span to toggle visibility component's subcomponents, download and synс %>
             <% if c.component_type == 'role' %>
               <a class="download_role_files secondary" href="/p/download_role_files?role=<%=c.path%>"
                     title="download role files">&darr;</a>
-              <span class="enable_sync secondary" onclick="window.enable_sync(this);"
-                    title="enable sync with local folder">&#x21C8;</span>
+              <span class="start_sync secondary" onclick="window.prepare_sync(this);"
+                    title="sync with local folder">&#x21C8;</span>
               <span class="toggle_components secondary" onclick="window.toggle_dependent_components(this);"
                     title="collapse/expand"></span>
             <% end %>
@@ -156,8 +174,12 @@
   </tr>
 </table>
 
-<% # JS %>
-<script type="text/javascript">
+<% ##################################### %>
+<% ################ JS ################# %>
+<% ##################################### %>
+
+<script>
+// Initialization
 window.name = "component_edit";
 document.title = '<%= @component.path.split('/').reverse.join(' - ') %> - ' + document.title;
 
@@ -207,8 +229,11 @@ window.context_select_changed = function(){
   }
 }
 </script>
-<script type="text/javascript">
-// AJAX Save and Create
+
+
+
+<script>  // AJAX Save and Create
+
 $(document).keydown(function (e) {
   if ((e.metaKey || e.ctrlKey) && e.keyCode == 83) {
     e.preventDefault();
@@ -261,18 +286,23 @@ function saveComponent() {
 }
 
 </script>
-<script type="text/javascript">
-// side menu highlight
+
+
+
+<script>  // side menu highlight
+
 $('.side.menu div[component_path="'+QueryString()['path']+'"] a.edit_link').addClass('selected');
 
 if(QueryString()['diff_with'])
   $('.side.menu #versions a').filter(function(){
     return QueryString(this.search)['diff_with'] == QueryString()['diff_with']; }).each(
       function(){ $(this).addClass('selected').prev().addClass('selected'); });
-
 </script>
-<script type="text/javascript">
-// AJAX Delete
+
+
+
+<script>  // AJAX Delete
+
 window.deleteLinkClicked = function(link)
 {
   if(!checkLockIsFree()) return;
@@ -288,11 +318,12 @@ window.deleteLinkClicked = function(link)
     $(this).remove();
   }
 }
-
-
 </script>
-<script type="text/javascript">
-// Track line numbers
+
+
+
+<script>  // Track line numbers
+
 editor.on('cursorActivity', function(cm) {
   window.history.replaceState({},'', '#'+ ((parseInt(cm.getCursor()['line']) || 0) + 1) +
     ":" + ((parseInt(cm.getCursor()['ch']) || 0) + 1));
@@ -325,14 +356,17 @@ editor.on('cursorActivity', function(cm) {
 //}
 
 </script>
-<script type="text/javascript">
-// Setting timeout for for 10 minutes OR Locking editor; Unlocking on beforeunload
+
+
+
+<script>  // Setting timeout for for ::EDIT_TIMEOUT OR Locking editor; Unlocking on beforeunload
+
 window.setOrResetLockTimeout = function(){
   if(window.__lockTimeout) clearTimeout(window.__lockTimeout);
   window.__lockTimeout = setTimeout(function(){
-    $('#locked_by').text('Locked by Timeout (10 minutes)');
+    $('#locked_by').text('Locked by Timeout (<%= Rosie::Programmer::EDIT_TIMEOUT.inspect %>)');
     editor.getWrapperElement().style.background = '#eee';
-  }, 10 * 60 * 1000);
+  }, <%= Rosie::Programmer::EDIT_TIMEOUT.to_i %> * 1000);
 }
 if(checkLockIsFree())
 {
@@ -340,10 +374,11 @@ if(checkLockIsFree())
 } else {
   editor.getWrapperElement().style.background = '#eee';
 }
-
 </script>
-<script type="text/javascript">
-// Protect from accidentally closing tab with work in progress
+
+
+
+<script>  // Protect from accidentally closing tab with work in progress
 
 $(window).on('beforeunload', function(){
   if(window.initial_body != $('#body').val())
@@ -357,8 +392,11 @@ editor.on('change', function(cm) {
 }) ;
 
 </script>
-<script type="text/javascript">
-// Toggle visibility of subcomponents
+
+
+
+<script>  // Toggle visibility of subcomponents
+
 window.toggle_dependent_components = function(element){
   var component_path = $(element).closest('div[component_path]').attr('component_path')
   var states = JSON.parse(localStorage.getItem("closed_dependent_components")) || [];
@@ -380,15 +418,19 @@ window.update_component_state = function(component_path){
     $(".side.menu div[component_path='"+component_path+"'] .toggle_components").html('&lt;&lt;')
   }
 }
-   // Now initializing on page load
+
+// Now initializing on page load
 $('span.toggle_components').each(function(){
   var component_path = $(this).closest('div[component_path]').attr('component_path');
   window.update_component_state(component_path);
 });
 
 </script>
-<script type="text/javascript">
-// ShowDiff if diff_with provided
+
+
+
+<script>  // ShowDiff if diff_with provided
+
 if($('#diff_version_body').size() > 0)
 {
   var origin = $('#diff_version_body').val(),
@@ -451,5 +493,165 @@ if($('#diff_version_body').size() > 0)
 // We are in current version, so highlight latest version as current
   $('#versions>.version:first a, #versions>.version:first span').addClass('selected');
 }
+</script>
+
+<script>  // role sync
+  window.prepare_sync = function(el){
+    if(!window.checkCommitMessagePresent()) return false;
+
+    var role_to_sync = $(el).closest('[component_path]').attr('component_path');
+    if(!!window._sync_role && (window._sync_role != role_to_sync)) {
+      alert('Already syncing: '+window._sync_role);
+      return false;
+    }
+    window._sync_role = role_to_sync;
+    var role = window._sync_role;
+    // here we check if we can block all the role components and have a commit_message in place
+    $.ajax({url: "?check_can_sync="+encodeURIComponent(role), type: "PATCH"}).success(function(result){
+        if(result['can_sync']) {
+
+          $('#locked_by').text('Locked by File Sync (<%= Rosie::Programmer::EDIT_TIMEOUT.inspect %> sliding timeout)');
+          editor.getWrapperElement().style.background = '#eee';
+
+          // add file input with directory uploading
+          $('#__fs').remove();
+          $('<input type="file" webkitdirectory="true" id="__fs" style="display:none"/>').change(function(){
+            window.load_files_and_check_md5(role, this);
+          }).appendTo('body').click();
+      } else {
+        alert('Sync cannot be started:\n'+result['reason']);
+      }
+    });
+  }
+
+  window.load_files_and_check_md5 = function(){
+    // here we upload direcotry and compare md5 of files
+    var role = window._sync_role;
+    var file_input = window.__fs;
+    window._sync = {};
+    $(file_input.files).each(function(){
+      var file = this;
+      if(file.name[0] == '.') return;
+      var relative_path = file.webkitRelativePath;
+      var component_filepath = role+'/'+file.webkitRelativePath.split(/\/(.+)/)[1];
+      var md5 = $('div[component_filepath="'+component_filepath+'"]').attr('component_md5');
+      var component_path =  $('div[component_filepath="'+component_filepath+'"]').attr('component_path');
+      var count = 0;
+      var file_last_modified = this.lastModified;
+      var reader = new FileReader();
+      reader.readAsText(file);
+      reader.onload = function (evt) {
+        client_md5 = CryptoJS.MD5(evt.target.result).toString();
+        window._sync[relative_path] = {
+          role: role,
+          file_input_path: file.webkitRelativePath,
+          md5_equals: (client_md5 == md5),
+          component_path: component_path,
+          component_filepath: component_filepath,
+          file_last_modified: file_last_modified,
+          relative_path: relative_path
+        }
+        if(!window._sync[relative_path]['md5_equals']) {
+          window._sync[relative_path]['body'] = evt.target.result;
+        }
+        if(window.check_files_timeout) clearTimeout(window.check_files_timeout);
+        window.check_files_timeout = setTimeout(confirm_changes, 100);
+      }
+    });
+  }
+
+  window.confirm_changes = function(){
+    var modified_files = "", added_files = "", total_count = 0;
+    $.each(window._sync, function(k,v){
+      if(v['md5_equals'] === false){
+        if(v['component_path'])
+          modified_files += "- " + v['component_filepath'] + "\n";
+        else
+          added_files += "- " + v['component_filepath'] + "\n";
+      }
+      total_count++;
+    })
+
+    if(modified_files != "" || added_files != "") {
+      var prompt_text = "Components to be overwritten. ";
+      if(modified_files != "") prompt_text += "Modified: \n" + modified_files;
+      if(added_files != "") prompt_text += "Added: \n" + added_files;
+      prompt_text += "\nEnter role name ("+window._sync_role+") to upload."
+      if(prompt(prompt_text) == window._sync_role){
+        window.upload_changes();
+      } else {
+        alert('Component name was entered incorrectly')
+      }
+    } else if(total_count > 0) {
+      window.confirm_and_start_sync();
+    } else {
+      alert('No files to sync');
+    }
+  }
+
+  window.upload_changes = function(){
+    var data_to_upload = [];
+    $.each(window._sync, function(k,v){
+      if(v['md5_equals'] === false){
+        data_to_upload.push(v);
+      }
+    });
+
+    $.ajax({url: "?upload_changes="+encodeURIComponent(window._sync_role),
+      type: "PATCH", data: {
+        files: JSON.stringify(data_to_upload),
+        commit_message: $('#commit_message').val()
+      }}).success(function(result){
+        if(result['success'])
+        {
+          if(result['reload'])
+            window.location.reload();
+          else
+            window.confirm_and_start_sync();
+        }
+      });
+  }
+
+  window.confirm_and_start_sync = function(){
+    if(!confirm('Files are in sync. Do you wish to watch files on client and upload them as they change?')){
+      window.location.reload();
+    } else {
+      $('div[component_path='+window._sync_role+'] .start_sync').addClass('bounce');
+      window.__sync_interval = setInterval(function(){
+        if($('#locked_by').is(':contains(Timeout)')) {
+          window.clearInterval(window.__sync_interval);
+          $('div[component_path='+window._sync_role+'] .start_sync').removeClass('bounce');
+          return;
+        }
+
+        $(window.__fs.files).each(function(){
+          var file = this;
+          var file_info = window._sync[file.webkitRelativePath];
+          if(!file_info) return;
+          if(file.lastModified != file_info['file_last_modified'])
+          {
+            var reader = new FileReader();
+            reader.readAsText(file);
+            reader.onload = function (evt) {
+              file_info['file_last_modified'] = file.lastModified;
+              file_info['body'] = evt.target.result;
+
+              $.ajax({url: "?upload_changes="+encodeURIComponent(window._sync_role),
+                type: "PATCH", data: {
+                  files: JSON.stringify([file_info]),
+                  commit_message: $('#commit_message').val()
+                }
+              }).success(function(result) {
+                window.jingle.play();
+                window.setOrResetLockTimeout();
+              });
+            }
+          }
+        });
+      }, 500);
+    }
+  }
+
+  window.jingle = new Audio(<%=render(partial: 'rosie/programmer/jingle')%>);
 
 </script>

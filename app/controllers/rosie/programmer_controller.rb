@@ -130,6 +130,8 @@ module Rosie
 
         @component.reload
 
+        cookies[:commit_message] = { value: params[:commit_message], expires: Programmer::EDIT_TIMEOUT }
+
         if(original_path != @component.path)
           render js: "window.location = '?path=#{@component.path}'"
         elsif((@component.loading_error.present?) || (component_had_errors_before_update))
@@ -234,6 +236,56 @@ module Rosie
 
       temp_file.close
       temp_file.unlink
+    end
+
+    def sync_components
+
+      if params[:check_can_sync].present?
+        role = params[:check_can_sync]
+        can_sync, reason = true, 'ok'
+        syncing_components = Component[role].subcomponents.to_a << Component[role]
+        locked_subcomponents = syncing_components.select{|c| !c.editing_locked_by.in?([nil, Programmer.current])}
+        if locked_subcomponents.any?
+          can_sync = false
+          reason = locked_subcomponents.map{|c|
+            "- `#{c.path}' is locked by #{c.editing_locked_by} #{
+              helpers.distance_of_time_in_words_to_now c.updated_at} ago"}.join("\n")
+        else
+          syncing_components.each do |c| c.update_lock!(remove_other_locks: false) end
+        end
+
+        render json: {success: true, can_sync: can_sync, reason: reason}
+      elsif params[:upload_changes].present?
+        raise 'Commit message is needed' if params[:commit_message].blank?
+
+        imported_new_components = false
+        role = params[:upload_changes]
+        files = JSON.parse params[:files]
+
+        Component.transaction do
+          files.sort_by{|f| f['relative_path'] }.each do |f|
+            component = Component.find_by(path: f['component_path'])
+            unless component
+              component_filepath = "#{f['role']}/#{f['relative_path'].split('/',2)[1]}"
+              component = ComponentTypes.get_component_by_rails_template_path component_filepath, init_new: true
+              imported_new_components = true
+            end
+
+            component.assign_attributes(
+              body: f['body'],
+              version_commit_message: "MASS IMPORT: #{params[:commit_message]}")
+            component.save!
+          end
+
+          syncing_components = Component[role].subcomponents.to_a << Component[role]
+          syncing_components.each do |c| c.update_lock!(remove_other_locks: false) end
+          Programmer.update_last_action_timestamp
+        end
+
+        render json: {success: true, reload: imported_new_components}
+      else
+        raise 'Not implemented'
+      end
     end
 
     private

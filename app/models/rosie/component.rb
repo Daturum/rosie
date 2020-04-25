@@ -17,6 +17,10 @@ module Rosie
     validates :format,          inclusion: { in: lambda do |c| c.permitted_formats end }
     validates :handler,         inclusion: { in: lambda do |c| c.permitted_handlers end }
     validates :name,            format: /\A[a-z0-9_]+\z/i
+    validates :name,            { inclusion: { in: lambda do |c| [c.component_type] end },
+                                    if: lambda do |c| c.class.component_types[c.component_type][:occurence] == 'single' end }
+    validates :name,            { exclusion: { in: lambda do |c| c.class.component_types.keys.map(&:to_s) end },
+                                    if: lambda do |c| c.class.component_types[c.component_type][:occurence] == 'multiple' end }
     serialize :loading_error,   ActiveSupport::HashWithIndifferentAccess
 
 
@@ -24,6 +28,10 @@ module Rosie
 
     def self.component_types
       ComponentTypes.types
+    end
+
+    def self.[] path
+      find_by path: path
     end
 
     # Tracking components used in request
@@ -55,18 +63,23 @@ module Rosie
 
     def get_locking_programmer
       return false if !persisted?
-      if updated_at > 10.minutes.ago && editing_locked_by != Programmer.current
+      if updated_at > Programmer::EDIT_TIMEOUT.ago && editing_locked_by != Programmer.current
         return editing_locked_by
       else
         return nil
       end
     end
 
-    def update_lock!
+    def update_lock! remove_other_locks: true
       raise "Cannot lock editing: already locked by #{editing_locked_by} @ #{updated_at}" if get_locking_programmer
       ActiveRecord::Base.transaction do
-        self.class.where(editing_locked_by: Programmer.current).update_all(editing_locked_by: nil, updated_at: 0.seconds.ago)
-        save!(editing_locked_by: Programmer.current, updated_at: 0.seconds.ago, :validate => false)
+        if remove_other_locks
+          self.class.where(editing_locked_by: Programmer.current).update_all(
+            editing_locked_by: nil, updated_at: 0.seconds.ago)
+        end
+
+        assign_attributes(editing_locked_by: Programmer.current, updated_at: 0.seconds.ago)
+        save!(:validate => false)
       end
     end
 
@@ -81,7 +94,7 @@ module Rosie
 
     def delete_recent_versions_of_current_programmer_except_latest
       return unless versions.last
-      versions.where("created_at > ?", 10.minutes.ago).where("id != ?", versions.last.id)
+      versions.where("created_at > ?", Programmer::EDIT_TIMEOUT.ago).where("id != ?", versions.last.id)
         .where(whodunnit: Programmer.current).destroy_all
     end
 
@@ -138,6 +151,10 @@ module Rosie
     def cache_hash
       "#{body}#{path}#{Rails.application.secrets.secret_key_base}#{
         AssetFile.cache_invalidation_key}".hash.to_s[-8..-1]
+    end
+
+    def subcomponents
+      self.class.where('path like ?', "#{path}/%")
     end
 
   end
