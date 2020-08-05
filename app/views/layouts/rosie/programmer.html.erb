@@ -58,25 +58,25 @@
 
   <body>
     <div class="main menu">
-      <a href="/" target="_blank" style="color:gray;">Root</a>
-      <a href="/p/cns" target="_blank">Console</a>
-      <a href="/p/components">Roles&amp;Scenarios</a>
-      <a href="/p/files">Files</a>
+      <a href="<%=mounted_path '/'%>" target="_blank" style="color:gray;">Root</a>
+      <a href="<%=mounted_path '/p/cns'%>" target="_blank">Console</a>
+      <a href="<%=mounted_path '/p/components'%>">Roles&amp;Scenarios</a>
+      <a href="<%=mounted_path '/p/files'%>">Files</a>
       <a href="<%#health_check_path(access_token: HealthCheck.access_token)%>" target="_blank"
         style="<%= "color:red" # if HealthCheck.check_for_errors.present?
         %>">Health</a>
-      <a href="/p/readme">Readme</a>
+      <a href="<%=mounted_path '/p/readme'%>">Readme</a>
       <%= link_to "Invite", invite_programmer_path, method: 'POST', remote: true,
         onclick: "invite_programmer.call(this);" %>
 
       <a href="#" id="analyze">Analyze at runtime</a><span id="analyze_options">: ?__=
-          <a href="/?__=c" target="_blank" title="Inject web-[C]onsole to a page">c</a>
-          <a href="/?__=t" target="_blank" title="(T)rack and display components, used by a page">t</a>
-          <a href="/?__=p" target="_blank" title="Profiler">p</a>
-          <a href="/?__=g" target="_blank" title="Garbage collector">g</a>
-          <a href="/?__=m" target="_blank" title="Memory profiler">m</a>
-          <a href="/?__=a" target="_blank" title="Analyze memory (object space)">a</a>
-          <a href="/?__=f" target="_blank" title="Flame graph">f</a>
+          <a href="<%=mounted_path '/?__=c'%>" target="_blank" title="Inject web-[C]onsole to a page">c</a>
+          <a href="<%=mounted_path '/?__=t'%>" target="_blank" title="(T)rack and display components, used by a page">t</a>
+          <a href="<%=mounted_path '/?__=p'%>" target="_blank" title="Profiler">p</a>
+          <a href="<%=mounted_path '/?__=g'%>" target="_blank" title="Garbage collector">g</a>
+          <a href="<%=mounted_path '/?__=m'%>" target="_blank" title="Memory profiler">m</a>
+          <a href="<%=mounted_path '/?__=a'%>" target="_blank" title="Analyze memory (object space)">a</a>
+          <a href="<%=mounted_path '/?__=f'%>" target="_blank" title="Flame graph">f</a>
         </span>
       <input type="text" id="__search_components" placeholder="Search (press Enter)" value="<%=params[:q]%>"></input>
 
