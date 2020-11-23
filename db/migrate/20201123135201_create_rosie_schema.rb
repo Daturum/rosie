@@ -4,5 +4,6 @@ class CreateRosieSchema < ActiveRecord::Migration[5.2]
   end
 
   def down
+    execute("DROP SCHEMA rosie CASCADE")
   end
 end
