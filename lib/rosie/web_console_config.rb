@@ -29,5 +29,5 @@ Rails.application.config.web_console.whiny_requests = !Rails.env.production?
 # Remount so it is not mounted to obvious standard route
 if(!Rails.application.config.web_console.mount_point ||
   Rails.application.config.web_console.mount_point == '/__web_console') then
-  Rails.application.config.web_console.mount_point = '/p/wcs'
+  Rails.application.config.web_console.mount_point = "#{ENV['ROSIE_MOUNT_PATH']}/p/wcs"
 end

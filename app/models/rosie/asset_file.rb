@@ -31,7 +31,9 @@ module Rosie
         if file
           segments = filename.split('/').map{|s| URI.escape s}
           segments[-1] = "#{file.cache_hash}__#{segments[-1]}"
-          "/files/#{segments.join('/')}"
+          result = "/files/#{segments.join('/')}"
+
+          ::Rosie::ApplicationController.helpers.mounted_path result, cache: false
         else
           nil
         end

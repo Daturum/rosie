@@ -56,7 +56,7 @@ module Rosie
           SCENARIO_HINTS
           template: <<~SCENARIO_TEMPLATE
             <h1><%= @component.name.humanize%> scenario</h1>
-            <%%= link_to "What's the time?", url_for(json_action: :get_current_time, some_param: 'some_val'),
+            <%%= link_to "What's the time?", url_for(format: :json, json_action: :get_current_time, some_param: 'some_val'),
             	id: "get_time_link", method: 'POST', remote: true, data:{type: :json, disable_with: 'Please wait...'} %>
             <script>
               $(document).on('ajax:success', '#get_time_link', function(event, data, status, xhr) {

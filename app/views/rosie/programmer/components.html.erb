@@ -72,7 +72,7 @@
           <div class="side_menu__component-actions">
             <% # this is span to toggle visibility component's subcomponents, download and synс %>
             <% if c.component_type == 'role' %>
-              <a class="download_role_files secondary" href="/p/download_role_files?role=<%=c.path%>"
+              <a class="download_role_files secondary" href="<%= mounted_path "/p/download_role_files?role=#{c.path}"%>"
                     title="download role files">&darr;</a>
               <span class="start_sync secondary" onclick="window.prepare_sync(this);"
                     title="sync with local folder">&#x21C8;</span>
@@ -630,6 +630,7 @@ if($('#diff_version_body').size() > 0)
           if(!file_info) return;
           if(file.lastModified != file_info['file_last_modified'])
           {
+          console.log('blah');
             var reader = new FileReader();
             reader.readAsText(file);
             reader.onload = function (evt) {
@@ -644,6 +645,8 @@ if($('#diff_version_body').size() > 0)
               }).success(function(result) {
                 window.jingle.play();
                 window.setOrResetLockTimeout();
+              }).fail(function(xhr, status){
+                console.log('Fail: '+status);
               });
             }
           }
