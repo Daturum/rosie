@@ -1,5 +1,14 @@
 class CreateRosieComponents < ActiveRecord::Migration[5.2]
   def change
+    reversible do |r|
+      r.up do
+        execute("SET search_path TO rosie,public")
+      end
+      r.down do
+        execute("SET search_path TO public")
+      end
+    end
+
     create_table :rosie_components do |t|
       t.string :component_type
       t.string :path
@@ -12,6 +21,15 @@ class CreateRosieComponents < ActiveRecord::Migration[5.2]
       t.text :loading_error
 
       t.timestamps
+    end
+
+    reversible do |r|
+      r.up do
+        execute("SET search_path TO public")
+      end
+      r.down do
+        execute("SET search_path TO rosie,public")
+      end
     end
   end
 end
