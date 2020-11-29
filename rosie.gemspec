@@ -46,7 +46,10 @@ Gem::Specification.new do |s|
   # Pony gem for convenient sending emails
   s.add_dependency 'pony'
 
-  # Add terminal-table gem for convenient logging complex objects for debugging 
+  # Add terminal-table gem for convenient logging complex objects for debugging purposes
   s.add_dependency 'terminal-table'
+
+  # Add autolink gem for convenient printing logs for debugging purposes
+  s.add_dependency 'rails_autolink'
 
 end
