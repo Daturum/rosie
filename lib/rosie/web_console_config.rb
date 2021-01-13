@@ -12,6 +12,7 @@ WebConsole::Request.class_eval do
       Rosie::Programmer.login(email, pw) end
     return programmer_authenticated && (ssl? || local?)
   end
+  def permitted?; from_whitelisted_ip? end # for webconsole version 4+
 end
 
 # Workaround for a magic floating bug
