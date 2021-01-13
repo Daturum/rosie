@@ -1,6 +1,7 @@
 # Change webconsole to authorize via Programmer Basic Auth and allow locally or by ssl
 # Put this to application.rb of your Rails app:
 # require Rosie::Engine.config.root.join('lib', 'rosie', 'web_console_config.rb')
+# and set proper ENV ROSIE_MOUNT_PATH and CONSIDER_HTTPS_PROTOCOL variables
 
 
 require 'web_console'
@@ -10,7 +11,7 @@ WebConsole::Request.class_eval do
   def from_whitelisted_ip?;
     programmer_authenticated = ActionController::HttpAuthentication::Basic.authenticate self do |email, pw|
       Rosie::Programmer.login(email, pw) end
-    return programmer_authenticated && (ssl? || local?)
+    return programmer_authenticated && (ssl? || local? || ENV['CONSIDER_HTTPS_PROTOCOL'])
   end
   def permitted?; from_whitelisted_ip? end # for webconsole version 4+
 end
